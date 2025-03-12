@@ -1,11 +1,9 @@
 'use client'
 
 import { GalleryVerticalEnd } from "lucide-react"
-import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { signIn, useSession } from "next-auth/react"
 import { useState } from "react"
 
 export function LoginForm({
@@ -13,9 +11,10 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
 
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const session = useSession();
+  console.log('session from login form', session);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,20 +22,15 @@ export function LoginForm({
     setError(null);
 
     try {
-      const result = await signIn("google", {
-        redirect: false,
-        callbackUrl: "/dashboard"
+      await signIn("google", {
+        redirectTo: "/dashboard",
       });
-      if (result?.error) {
-        setError(result.error);
-      } else if (result?.url) {
-        router.push(result.url);
-      }
     } catch (error) {
       console.error("Sign-in error:", error);
       setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
+      console.log('sign in success');
     }
   }
 
