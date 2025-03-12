@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
+import { SignOutForm } from "@/components/auth/sign-out-form";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession({
@@ -18,17 +19,17 @@ export default function DashboardPage() {
   
   return (
     <div className="container mx-auto p-6">
-      {session?.user?.email && (
-        <div className="mb-4 text-sm text-muted-foreground">
-          Signed in as {session.user.email}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Your Dashboard</h1>
+          {session?.user?.email && (
+            <div className="text-sm text-muted-foreground mt-1">
+              Signed in as {session.user.email}
+            </div>
+          )}
         </div>
-      )}
-      
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Your Dashboard</h1>
-        <p className="text-muted-foreground mt-2">
-          Track your progress and manage your goals
-        </p>
+        
+        <SignOutForm variant="ghost" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
