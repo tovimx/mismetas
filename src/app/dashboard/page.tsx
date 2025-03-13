@@ -2,6 +2,7 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { SignOutForm } from "@/components/auth/sign-out-form"
+import { GoalSection } from "@/components/goals/goal-section"
 
 // Server-side function to fetch user goals using email as fallback
 async function getUserGoals(userId: string, email: string) {
@@ -109,41 +110,7 @@ export default async function DashboardPage() {
         </div>
       </div>
       
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-4">Your Goals</h2>
-        <div className="grid grid-cols-1 gap-4">
-          {goals.length === 0 ? (
-            <div className="text-center py-12 border rounded-lg">
-              <p className="text-muted-foreground">You don't have any goals yet.</p>
-              <button className="mt-4 text-primary hover:underline">Create your first goal</button>
-            </div>
-          ) : (
-            goals.map((goal) => (
-              <div key={goal.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <h3 className="text-lg font-semibold">{goal.title}</h3>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                    {Math.min(100, Math.round(goal.progress / (goal.target || 100) * 100))}%
-                  </span>
-                </div>
-                {goal.description && (
-                  <p className="text-muted-foreground text-sm mt-2">{goal.description}</p>
-                )}
-                <div className="mt-4 bg-muted rounded-full h-2 overflow-hidden">
-                  <div 
-                    className="bg-primary h-full transition-all duration-500 ease-in-out" 
-                    style={{ width: `${Math.min(100, Math.round(goal.progress / (goal.target || 100) * 100))}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>{goal.progress}</span>
-                  <span>{goal.target || 100}</span>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+      <GoalSection goals={goals} />
     </div>
   )
 } 
