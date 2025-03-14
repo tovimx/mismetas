@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
 import { addDays, addMonths, addYears, format, endOfYear } from 'date-fns'
@@ -55,12 +55,10 @@ export function TimeframeSlider({ initialValue = 0, onChange }: TimeframeSliderP
     return '';
   };
   
-  // Update the slider value and notify parent only when the slider changes
+  // Update the slider value and notify parent when the slider changes
   const handleSliderChange = (values: number[]) => {
     const newValue = values[0];
     setSliderValue(newValue);
-    
-    // Only notify parent when slider actually changes
     onChange?.(timeframes[newValue].value);
   };
   

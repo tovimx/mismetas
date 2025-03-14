@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useFormState } from 'react-dom'
+import { useState, useEffect, memo, useMemo, useCallback, useTransition, useRef } from 'react'
+import { useActionState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createGoal, type GoalFormState } from '@/app/actions/goal-actions'
 import { Button } from '@/components/ui/button'
@@ -10,23 +10,22 @@ import { Label } from '@/components/ui/label'
 import { ProgressSlider } from './progress-slider'
 import { TimeframeSlider } from './timeframe-slider'
 import { PlusIcon, XIcon, ArrowRightIcon, CheckIcon } from 'lucide-react'
+import { useToast } from '@/components/ui/toaster'
 
 const initialState: GoalFormState = {}
 
 interface InlineGoalCreationProps {
   onOpenChange?: (isOpen: boolean) => void;
-  setInitiallyOpen?: boolean;
 }
 
 export function InlineGoalCreation({ 
   onOpenChange,
-  setInitiallyOpen = false 
 }: InlineGoalCreationProps) {
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(setInitiallyOpen)
+  const { addToast } = useToast()
   const [step, setStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [state, formAction] = useFormState(createGoal, initialState)
+  const [isPending, startTransition] = useTransition()
+  const [state, formAction] = useActionState(createGoal, initialState)
   
   const [formData, setFormData] = useState({
     title: '',
@@ -34,100 +33,123 @@ export function InlineGoalCreation({
     duration: { value: 0, unit: 'day' }
   })
   
-  // Notify parent component when isOpen changes
-  useEffect(() => {
-    onOpenChange?.(isOpen);
-  }, [isOpen, onOpenChange]);
   
-  const handleGoalTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGoalTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, title: e.target.value }))
-  }
+  }, []);
   
-  const handleProgressChange = (progress: number) => {
+  const handleProgressChange = useCallback((progress: number) => {
     setFormData(prev => ({ ...prev, progress }))
-  }
+  }, []);
   
-  const handleTimeframeChange = (duration: { value: number, unit: string }) => {
+  const handleTimeframeChange = useCallback((duration: { value: number, unit: string }) => {
     setFormData(prev => ({ ...prev, duration }))
-  }
+  }, []);
   
-  const nextStep = () => {
+  const nextStep = useCallback(() => {
     setStep(prev => prev + 1)
-  }
+  }, []);
   
-  const prevStep = () => {
+  const prevStep = useCallback(() => {
     setStep(prev => Math.max(1, prev - 1))
-  }
+  }, []);
   
-  const handleCancel = () => {
-    setIsOpen(false)
+  const resetForm = useCallback(() => {
     setStep(1)
     setFormData({ 
       title: '', 
       progress: 0,
       duration: { value: 0, unit: 'day' }
     })
-  }
+  }, []);
   
-  const handleOpenClick = () => {
-    // Update parent state first, then open the form
-    onOpenChange?.(true);
-    setIsOpen(true)
-  }
+  const handleCancel = useCallback(() => {
+    resetForm()
+    onOpenChange?.(false)
+  }, [resetForm, onOpenChange]);
   
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    
-    const formElement = e.currentTarget
-    const formDataObj = new FormData(formElement)
-    await formAction(formDataObj)
-    
-    setIsSubmitting(false)
-  }
+  const handleOpenClick = useCallback(() => {
+    onOpenChange?.(true)
+  }, [onOpenChange]);
   
-  // If goal was created successfully, close the form and refresh
-  if (state.success) {
-    setIsOpen(false)
-    setStep(1)
-    setFormData({ 
-      title: '', 
-      progress: 0,
-      duration: { value: 0, unit: 'day' }
+  // Use React's useTransition for better UX during form submission
+  const handleSubmit = (async (e: React.FormEvent<HTMLFormElement>) => {
+    console.log('handleSubmit', e);
+    e.preventDefault();
+    addToast({
+      title: 'Success!',
+      description: 'Operation test',
+      variant: 'success',
     })
-    router.refresh()
-    // Reset state for next time
-    state.success = false
-  }
+  });
   
-  if (!isOpen) {
-    return (
-      <Button 
-        onClick={handleOpenClick}
-        className="flex items-center justify-center gap-2"
-        variant="outline"
-        size="sm"
-      >
-        <PlusIcon className="h-4 w-4" />
-        Create goal
-      </Button>
-    )
-  }
+  // Use a local success state to prevent infinite loop
+  const [hasProcessedSuccess, setHasProcessedSuccess] = useState(false);
   
-  const steps = [
+  // Handle successful goal creation with useEffect
+  // useEffect(() => {
+  //   // Only process success state once
+  //   if (state.success && !hasProcessedSuccess) {
+  //     setHasProcessedSuccess(true);
+      
+  //     addToast({
+  //       title: "Goal created successfully!",
+  //       description: `Your goal "${formData.title}" has been created.`,
+  //       variant: "success",
+  //     });
+      
+  //     // First close the form to unmount the TimeframeSlider
+  //     setIsOpen(false);
+      
+  //     // Use setTimeout to ensure the component has time to unmount before resetting state
+  //     setTimeout(() => {
+  //       resetForm();
+  //       router.refresh();
+  //     }, 0);
+  //   }
+  // }, [state.success, router, resetForm, addToast, formData.title, hasProcessedSuccess]);
+  
+  // Reset the success state tracking when state.success becomes false
+  // useEffect(() => {
+  //   if (!state.success && hasProcessedSuccess) {
+  //     setHasProcessedSuccess(false);
+  //   }
+  // }, [state.success, hasProcessedSuccess]);
+  
+  // Handle error notifications separately
+  // useEffect(() => {
+  //   if (state.errors && Object.keys(state.errors).length > 0) {
+  //     // Show error toast if there are validation errors
+  //     const errorMessage = state.errors._form 
+  //       ? state.errors._form[0] 
+  //       : "There was an error creating your goal. Please check the form and try again.";
+        
+  //     addToast({
+  //       title: "Failed to create goal",
+  //       description: errorMessage,
+  //       variant: "error",
+  //     });
+  //   }
+  // }, [state.errors, addToast]);
+  
+  // Memoize the steps to prevent unnecessary re-renders
+  const steps = useMemo(() => [
     { id: 1, label: 'Goal' },
     { id: 2, label: 'Progress' },
     { id: 3, label: 'Timeline' }
-  ]
+  ], []);
+  
+  // Memoize the step title for better performance
+  const stepTitle = useMemo(() => {
+    if (step === 1) return 'What is your goal?'
+    if (step === 2) return 'Track your progress'
+    return 'When do you want to complete it?'
+  }, [step]);
   
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">
-          {step === 1 ? 'What is your goal?' : 
-           step === 2 ? 'Track your progress' : 
-           'When do you want to complete it?'}
-        </h3>
+        <h3 className="text-lg font-semibold">{stepTitle}</h3>
         <Button 
           variant="ghost" 
           size="sm" 
@@ -213,7 +235,7 @@ export function InlineGoalCreation({
                     variant="outline" 
                     onClick={handleCancel}
                   >
-                    Back
+                    Cancel
                   </Button>
                   <Button 
                     type="button" 
@@ -267,10 +289,11 @@ export function InlineGoalCreation({
               <input type="hidden" name="durationValue" value={formData.duration.value} />
               <input type="hidden" name="durationUnit" value={formData.duration.unit} />
               
+              {/* Use a static key to prevent unnecessary remounting */}
               <TimeframeSlider 
                 initialValue={0} // Default to Today
                 onChange={handleTimeframeChange}
-                key="timeframe-slider"
+                key="timeframe-slider-static"
               />
               
               {state.errors?._form && (
@@ -291,9 +314,9 @@ export function InlineGoalCreation({
                 </Button>
                 <Button 
                   type="submit" 
-                  disabled={isSubmitting}
+                  disabled={isPending}
                 >
-                  {isSubmitting ? (
+                  {isPending ? (
                     <span className="flex items-center">
                       <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
