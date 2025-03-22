@@ -6,51 +6,23 @@ import { SignOutForm } from '@/components/auth/sign-out-form';
 import { GoalSection } from '@/components/goals/goal-section';
 
 // Server-side function to fetch user goals using email as fallback
-async function getUserGoals(userId: string, email: string) {
-  // First try to find the user by ID
+async function getUserGoals(userId: string) {
   const user = await db.user.findUnique({
     where: { id: userId },
     include: { goals: { orderBy: { updatedAt: 'desc' } } },
   });
 
-  if (user) {
-    return user.goals;
-  }
-
-  // If that fails, try to find by email
-  if (email) {
-    const userByEmail = await db.user.findUnique({
-      where: { email },
-      include: { goals: { orderBy: { updatedAt: 'desc' } } },
-    });
-
-    if (userByEmail) {
-      return userByEmail.goals;
-    }
-  }
-
-  // If both fail, return empty array
-  return [];
+  return user?.goals || [];
 }
 
 export default async function DashboardPage() {
-  // Server-side authentication check
   const session = await auth();
 
-  if (!session || !session.user) {
-    redirect('/login');
+  if (!session?.user?.email) {
+    return null; // Since middleware handles redirect, we can just return null
   }
 
-  // Get user info from session
-  const userId = session.user.id; // This might be undefined initially
-  const email = session.user.email; // Email should always be available from Google
-
-  if (!email) {
-    redirect('/login');
-  }
-
-  // Fetch user goals on the server using both ID and email as fallback
-  const goals = await getUserGoals(userId || '', email);
+  const goals = await getUserGoals(session.user.id || '');
 
   return (
     <div className="container mx-auto p-6">

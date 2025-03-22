@@ -128,3 +128,63 @@ If you're using VS Code, the project includes settings for:
 - Using the correct formatters for each file type
 
 Install the Prettier and ESLint extensions in VS Code for the best experience.
+
+## Using Icons
+
+The application uses Lucide React for icons, with a custom wrapper component for consistent usage across the app.
+
+### Adding New Icons
+
+1. Import the icon from `lucide-react` in `src/components/ui/icons.tsx`:
+
+   ```typescript
+   import { Plus, Trash, Edit } from 'lucide-react';
+   ```
+
+2. Add it to the `Icons` object:
+   ```typescript
+   export const Icons = {
+     plus: Plus,
+     trash: Trash,
+     edit: Edit,
+   } as const;
+   ```
+
+### Using Icons in Components
+
+1. Import the Icon component:
+
+   ```typescript
+   import { Icon } from '@/components/ui/icon';
+   ```
+
+2. Use it in your component:
+   ```typescript
+   <Icon name="plus" className="h-4 w-4" />
+   ```
+
+The Icon component accepts the following props:
+
+- `name`: The name of the icon (must be a key from the Icons object)
+- `size`: The size of the icon (defaults to 16)
+- `className`: Additional CSS classes
+- All standard HTML div props
+
+Example usage:
+
+```typescript
+// Basic usage
+<Icon name="plus" />
+
+// With custom size
+<Icon name="trash" size={20} />
+
+// With additional classes
+<Icon name="edit" className="text-primary" />
+
+// In a button
+<button className="flex items-center gap-2">
+  <Icon name="plus" className="h-4 w-4" />
+  Add Item
+</button>
+```
