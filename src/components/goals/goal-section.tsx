@@ -38,7 +38,11 @@ export function GoalSection({ goals }: GoalSectionProps) {
             )}
             <div className="flex justify-center">
               {isCreatingGoal ? (
-                <InlineGoalCreation onOpenChange={handleFormOpen} />
+                <div className="border rounded-lg p-4">
+                  <div className="flex justify-center">
+                    <InlineGoalCreation onOpenChange={handleFormOpen} />
+                  </div>
+                </div>
               ) : (
                 <button
                   onClick={handleEmptyStateButtonClick}
@@ -67,29 +71,35 @@ export function GoalSection({ goals }: GoalSectionProps) {
         ) : (
           <>
             {!isCreatingGoal ? (
-              <button
-                onClick={handleEmptyStateButtonClick}
-                className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-4 w-4"
+              <div className="flex justify-end">
+                <button
+                  onClick={handleEmptyStateButtonClick}
+                  className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
                 >
-                  <path d="M5 12h14" />
-                  <path d="M12 5v14" />
-                </svg>
-                Add Goal
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4"
+                  >
+                    <path d="M5 12h14" />
+                    <path d="M12 5v14" />
+                  </svg>
+                  Add Goal
+                </button>
+              </div>
             ) : (
-              <InlineGoalCreation onOpenChange={handleFormOpen} />
+              <div className="border rounded-lg p-4">
+                <div className="flex justify-center">
+                  <InlineGoalCreation onOpenChange={handleFormOpen} />
+                </div>
+              </div>
             )}
 
             {goals.map(goal => (

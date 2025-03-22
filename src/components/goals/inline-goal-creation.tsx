@@ -22,7 +22,7 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
   const { addToast } = useToast();
   const [step, setStep] = useState(1);
   const [isPending, startTransition] = useTransition();
-  const [state, _formAction] = useActionState(createGoal, initialState);
+  const [state, formAction] = useActionState(createGoal, initialState);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -88,6 +88,9 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
           if (!formData.get('targetValue') || Number(formData.get('targetValue')) <= 0) {
             formData.set('targetValue', '100'); // Set default if missing or invalid
           }
+
+          // Submit the form data to the server action
+          formAction(formData);
         } catch (error) {
           console.error('Error submitting form:', error);
           addToast({
@@ -98,7 +101,7 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
         }
       });
     },
-    [addToast, startTransition]
+    [addToast, startTransition, formAction]
   );
 
   const steps = useMemo(
