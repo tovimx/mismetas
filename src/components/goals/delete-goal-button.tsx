@@ -20,16 +20,16 @@ export function DeleteGoalButton({ goalId }: DeleteGoalButtonProps) {
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      
+
       const result = await deleteGoal(goalId);
-      
+
       if (result.success) {
         addToast({
           title: 'Goal deleted',
           description: 'Your goal has been successfully deleted.',
           variant: 'success',
         });
-        
+
         // Refresh the page to update the goals list
         router.refresh();
       } else {
@@ -45,6 +45,7 @@ export function DeleteGoalButton({ goalId }: DeleteGoalButtonProps) {
         description: 'An unexpected error occurred.',
         variant: 'error',
       });
+      console.error(error);
     } finally {
       setIsDeleting(false);
       setShowConfirm(false);
@@ -55,18 +56,18 @@ export function DeleteGoalButton({ goalId }: DeleteGoalButtonProps) {
     return (
       <div className="flex items-center gap-2">
         <span className="text-sm">Delete?</span>
-        <Button 
-          variant="destructive" 
-          size="sm" 
+        <Button
+          variant="destructive"
+          size="sm"
           onClick={handleDelete}
           disabled={isDeleting}
           className="h-7 px-2"
         >
           {isDeleting ? '...' : 'Yes'}
         </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => setShowConfirm(false)}
           disabled={isDeleting}
           className="h-7 px-2"
@@ -88,4 +89,4 @@ export function DeleteGoalButton({ goalId }: DeleteGoalButtonProps) {
       <TrashIcon className="h-4 w-4" />
     </Button>
   );
-} 
+}

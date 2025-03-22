@@ -23,29 +23,29 @@ The toast system consists of:
 ### Basic Usage
 
 ```tsx
-'use client'
+'use client';
 
-import { useToast } from '@/components/ui/toaster'
+import { useToast } from '@/components/ui/toaster';
 
 function MyComponent() {
-  const { addToast } = useToast()
-  
+  const { addToast } = useToast();
+
   function handleSuccess() {
     addToast({
       title: 'Success!',
       description: 'Operation completed successfully',
       variant: 'success',
-    })
+    });
   }
-  
+
   function handleError() {
     addToast({
       title: 'Error!',
       description: 'Something went wrong',
       variant: 'error',
-    })
+    });
   }
-  
+
   // Use in event handlers, form submissions, etc.
 }
 ```
@@ -54,42 +54,42 @@ function MyComponent() {
 
 The `useToast()` hook provides the following:
 
-| Method | Parameters | Description |
-|--------|------------|-------------|
-| `addToast` | `{ title, description, variant, duration }` | Shows a new toast notification |
-| `removeToast` | `id` | Manually removes a specific toast |
-| `toasts` | - | Array of current toast objects |
+| Method        | Parameters                                  | Description                       |
+| ------------- | ------------------------------------------- | --------------------------------- |
+| `addToast`    | `{ title, description, variant, duration }` | Shows a new toast notification    |
+| `removeToast` | `id`                                        | Manually removes a specific toast |
+| `toasts`      | -                                           | Array of current toast objects    |
 
 #### Toast Configuration Options
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `title` | `string` | Required | Main toast message |
-| `description` | `string` | Optional | Additional details |
-| `variant` | `'success' \| 'error'` | Required | Visual style |
-| `duration` | `number` | `5000` | Time in ms before auto-dismiss |
+| Property      | Type                   | Default  | Description                    |
+| ------------- | ---------------------- | -------- | ------------------------------ |
+| `title`       | `string`               | Required | Main toast message             |
+| `description` | `string`               | Optional | Additional details             |
+| `variant`     | `'success' \| 'error'` | Required | Visual style                   |
+| `duration`    | `number`               | `5000`   | Time in ms before auto-dismiss |
 
 ## Examples
 
 ### Success Toast After Form Submission
 
 ```tsx
-const handleSubmit = async (formData) => {
+const handleSubmit = async formData => {
   try {
-    await submitForm(formData)
+    await submitForm(formData);
     addToast({
       title: 'Form Submitted',
       description: 'Your data has been saved successfully',
       variant: 'success',
-    })
+    });
   } catch (error) {
     addToast({
       title: 'Submission Failed',
       description: error.message || 'Please try again',
       variant: 'error',
-    })
+    });
   }
-}
+};
 ```
 
 ### Error Toast for API Failures
@@ -97,20 +97,20 @@ const handleSubmit = async (formData) => {
 ```tsx
 const fetchData = async () => {
   try {
-    setLoading(true)
-    const data = await api.getData()
-    setData(data)
+    setLoading(true);
+    const data = await api.getData();
+    setData(data);
   } catch (error) {
     addToast({
       title: 'Failed to load data',
       description: 'Please check your connection and try again',
       variant: 'error',
       duration: 7000, // Longer duration for important errors
-    })
+    });
   } finally {
-    setLoading(false)
+    setLoading(false);
   }
-}
+};
 ```
 
 ### Custom Duration
@@ -122,7 +122,7 @@ addToast({
   description: 'The system will be unavailable tonight from 2-4 AM',
   variant: 'error',
   duration: 10000,
-})
+});
 ```
 
 ## Best Practices
@@ -130,4 +130,4 @@ addToast({
 1. **Informative Messages**: Provide clear, actionable information in toast messages
 2. **Appropriate Timing**: Use longer durations for important messages
 3. **Consistent Usage**: Use success toasts for confirmations and error toasts for problems
-4. **Concise Content**: Keep toast messages brief and to the point 
+4. **Concise Content**: Keep toast messages brief and to the point

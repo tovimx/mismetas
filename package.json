@@ -7,6 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "fix": "npm run format && npm run lint:fix",
+    "find:console": "grep -r \"console\\.log\" --include=\"*.{ts,tsx,js,jsx}\" src/",
+    "find:unused": "eslint --ext .ts,.tsx src/ --rule \"@typescript-eslint/no-unused-vars: error\" --fix-dry-run",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:studio": "prisma studio",
@@ -15,7 +20,8 @@
     "db:migrate:reset": "prisma migrate reset",
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed",
-    "dev:full": "npm run db:up && npm run dev"
+    "dev:full": "npm run db:up && npm run dev",
+    "prepare": "husky"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.8.0",
@@ -46,13 +52,28 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "typescript": "^5"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
   }
 }

@@ -38,15 +38,15 @@ async function main() {
   });
 
   console.log(`Demo user created: ${demoUser.name} (${demoUser.email})`);
-  
+
   // Add more seed data as needed
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error(e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
-  }); 
+  });

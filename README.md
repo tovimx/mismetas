@@ -5,6 +5,7 @@ A collaborative goal-tracking web application that helps users set goals, track 
 ## Project Overview
 
 MisMetas.com (English: "MyGoals") is a web application designed to help users:
+
 - Register and create personal accounts
 - Set meaningful personal and professional goals
 - Track progress with numerical indicators
@@ -34,6 +35,7 @@ MisMetas.com (English: "MyGoals") is a web application designed to help users:
 ### Project Structure Rules
 
 1. **Feature-based Organization**:
+
    - `/src/app/` - App router pages and layouts
    - `/src/components/` - Reusable UI components
    - `/src/features/` - Feature-specific components and logic
@@ -42,6 +44,7 @@ MisMetas.com (English: "MyGoals") is a web application designed to help users:
    - `/prisma/` - Prisma schema and migrations
 
 2. **Component Naming**:
+
    - PascalCase for component files
    - Descriptive names that reflect the component's purpose
    - Feature-specific components should be prefixed with the feature name
@@ -54,11 +57,13 @@ MisMetas.com (English: "MyGoals") is a web application designed to help users:
 ### Database Rules
 
 1. **Schema Design**:
+
    - Clear table relationships with appropriate foreign keys
    - Use of indexes for frequently queried fields
    - Consistent naming conventions for tables and columns
 
 2. **Data Access**:
+
    - No direct SQL in components - use abstracted data access methods
    - Transactions for operations affecting multiple records
    - Input validation before database operations
@@ -73,6 +78,7 @@ MisMetas.com (English: "MyGoals") is a web application designed to help users:
 ### Collaboration Rules
 
 1. **Git Workflow**:
+
    - Feature branches from main
    - Pull requests with code reviews before merging
    - Conventional commits for clear changelogs
@@ -90,3 +96,35 @@ MisMetas.com (English: "MyGoals") is a web application designed to help users:
 ## License
 
 [License information]
+
+## Code Formatting and Linting
+
+This project uses Prettier and ESLint for code formatting and linting:
+
+### Tools and Configuration
+
+- **Prettier**: For consistent code formatting
+- **ESLint**: For code quality and best practices
+- **Husky**: For pre-commit hooks
+- **lint-staged**: For running linters on staged files
+
+### Available Scripts
+
+- `npm run format`: Format all files with Prettier
+- `npm run lint`: Check for ESLint issues
+- `npm run lint:fix`: Fix automatically fixable ESLint issues
+- `npm run fix`: Run both format and lint:fix commands
+
+### Pre-commit Hooks
+
+When you commit code, Husky will automatically run Prettier and ESLint on your staged files to ensure code quality and consistency.
+
+### VS Code Integration
+
+If you're using VS Code, the project includes settings for:
+
+- Format on save
+- ESLint auto-fix on save
+- Using the correct formatters for each file type
+
+Install the Prettier and ESLint extensions in VS Code for the best experience.

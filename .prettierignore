@@ -1,0 +1,16 @@
+.next
+node_modules
+public
+build
+dist
+.vercel
+coverage
+.github
+.husky
+.vscode
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+.env
+.env.*
+!.env.example 
