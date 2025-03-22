@@ -1,19 +1,14 @@
 import NextAuth from 'next-auth';
-import Google from 'next-auth/providers/google';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { db } from '@/lib/db';
+import authConfig from './auth.config';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(db),
-  providers: [Google],
-  session: {
-    strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  pages: {
-    signIn: '/login',
-  },
+  session: { strategy: 'jwt' as const },
   callbacks: {
+    ...authConfig.callbacks,
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;
