@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { InlineGoalCreation } from '@/components/goals/inline-goal-creation';
 import { type Goal } from '@prisma/client';
+import { DeleteGoalButton } from '@/components/goals/delete-goal-button';
 
 type GoalSectionProps = {
   goals: Goal[];
@@ -64,9 +65,12 @@ export function GoalSection({ goals }: GoalSectionProps) {
               <div key={goal.id} className="border rounded-lg p-4">
                 <div className="flex justify-between items-start">
                   <h3 className="text-lg font-semibold">{goal.title}</h3>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                    {Math.min(100, Math.round(goal.progress / (goal.target || 100) * 100))}%
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                      {Math.min(100, Math.round(goal.progress / (goal.target || 100) * 100))}%
+                    </span>
+                    <DeleteGoalButton goalId={goal.id} />
+                  </div>
                 </div>
                 {goal.description && (
                   <p className="text-muted-foreground text-sm mt-2">{goal.description}</p>

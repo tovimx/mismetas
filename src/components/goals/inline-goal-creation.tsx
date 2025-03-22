@@ -21,7 +21,6 @@ interface InlineGoalCreationProps {
 export function InlineGoalCreation({ 
   onOpenChange,
 }: InlineGoalCreationProps) {
-  const router = useRouter()
   const { addToast } = useToast()
   const [step, setStep] = useState(1)
   const [isPending, startTransition] = useTransition()
@@ -29,10 +28,16 @@ export function InlineGoalCreation({
   
   const [formData, setFormData] = useState({
     title: '',
+    description: '',
     progress: 0,
+    targetValue: 100,
     duration: { value: 0, unit: 'day' }
   })
   
+  const router = useRouter()
+  
+  // Add state to track if success has been handled to avoid multiple processing
+  const [successHandled, setSuccessHandled] = useState(false)
   
   const handleGoalTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, title: e.target.value }))
@@ -58,7 +63,9 @@ export function InlineGoalCreation({
     setStep(1)
     setFormData({ 
       title: '', 
+      description: '',
       progress: 0,
+      targetValue: 100,
       duration: { value: 0, unit: 'day' }
     })
   }, []);
@@ -72,79 +79,99 @@ export function InlineGoalCreation({
     onOpenChange?.(true)
   }, [onOpenChange]);
   
-  // Use React's useTransition for better UX during form submission
-  const handleSubmit = (async (e: React.FormEvent<HTMLFormElement>) => {
-    console.log('handleSubmit', e);
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    addToast({
-      title: 'Success!',
-      description: 'Operation test',
-      variant: 'success',
-    })
-  });
-  
-  // Use a local success state to prevent infinite loop
-  const [hasProcessedSuccess, setHasProcessedSuccess] = useState(false);
-  
-  // Handle successful goal creation with useEffect
-  // useEffect(() => {
-  //   // Only process success state once
-  //   if (state.success && !hasProcessedSuccess) {
-  //     setHasProcessedSuccess(true);
-      
-  //     addToast({
-  //       title: "Goal created successfully!",
-  //       description: `Your goal "${formData.title}" has been created.`,
-  //       variant: "success",
-  //     });
-      
-  //     // First close the form to unmount the TimeframeSlider
-  //     setIsOpen(false);
-      
-  //     // Use setTimeout to ensure the component has time to unmount before resetting state
-  //     setTimeout(() => {
-  //       resetForm();
-  //       router.refresh();
-  //     }, 0);
-  //   }
-  // }, [state.success, router, resetForm, addToast, formData.title, hasProcessedSuccess]);
-  
-  // Reset the success state tracking when state.success becomes false
-  // useEffect(() => {
-  //   if (!state.success && hasProcessedSuccess) {
-  //     setHasProcessedSuccess(false);
-  //   }
-  // }, [state.success, hasProcessedSuccess]);
-  
-  // Handle error notifications separately
-  // useEffect(() => {
-  //   if (state.errors && Object.keys(state.errors).length > 0) {
-  //     // Show error toast if there are validation errors
-  //     const errorMessage = state.errors._form 
-  //       ? state.errors._form[0] 
-  //       : "There was an error creating your goal. Please check the form and try again.";
+    console.log('Form submission started');
+    
+    // Indicate loading state
+    startTransition(() => {
+      try {
+        const formElement = e.currentTarget;
+        const formData = new FormData(formElement);
         
-  //     addToast({
-  //       title: "Failed to create goal",
-  //       description: errorMessage,
-  //       variant: "error",
-  //     });
-  //   }
-  // }, [state.errors, addToast]);
+        // Ensure targetValue is positive
+        if (!formData.get('targetValue') || Number(formData.get('targetValue')) <= 0) {
+          formData.set('targetValue', '100'); // Set default if missing or invalid
+        }
+        
+        console.log('About to call formAction with:', formData);
+        for (const [key, value] of formData.entries()) {
+          console.log(`${key}: ${value}`);
+        }
+        
+        // Submit and log the result
+        const result = formAction(formData);
+        console.log('formAction called, result promise:', result);
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        addToast({
+          title: 'Error',
+          description: 'An unexpected error occurred while creating your goal.',
+          variant: 'error',
+        });
+      }
+    });
+  }, [formAction, addToast, startTransition]);
   
-  // Memoize the steps to prevent unnecessary re-renders
   const steps = useMemo(() => [
     { id: 1, label: 'Goal' },
     { id: 2, label: 'Progress' },
     { id: 3, label: 'Timeline' }
   ], []);
   
-  // Memoize the step title for better performance
   const stepTitle = useMemo(() => {
     if (step === 1) return 'What is your goal?'
     if (step === 2) return 'Track your progress'
     return 'When do you want to complete it?'
   }, [step]);
+  
+  useEffect(() => {
+    if (state.success && !successHandled) {
+      console.log('Goal creation succeeded!');
+      setSuccessHandled(true);
+      
+      addToast({
+        title: 'Goal Created',
+        description: `Your goal "${formData.title}" has been created successfully.`,
+        variant: 'success',
+      });
+      
+      // Close the form
+      onOpenChange?.(false);
+      
+      // Reset form state and refresh the page to show the new goal
+      resetForm();
+      router.refresh();
+    } else if (state.errors) {
+      console.log('Goal creation failed with errors:', state.errors);
+      
+      // Check for specific field errors to provide more helpful messages
+      const errorMessages = [];
+      
+      if (state.errors.title) {
+        errorMessages.push(`Title: ${state.errors.title[0]}`);
+      }
+      if (state.errors.description) {
+        errorMessages.push(`Description: ${state.errors.description[0]}`);
+      }
+      if (state.errors.targetValue) {
+        errorMessages.push(`Target Value: ${state.errors.targetValue[0]}`);
+      }
+      if (state.errors._form) {
+        errorMessages.push(...state.errors._form);
+      }
+      
+      const errorMessage = errorMessages.length > 0 
+        ? errorMessages.join('. ') 
+        : 'Please check the form for errors.';
+      
+      addToast({
+        title: 'Validation Error',
+        description: errorMessage,
+        variant: 'error',
+      });
+    }
+  }, [state, addToast, formData.title, router, resetForm, onOpenChange, successHandled]);
   
   return (
     <div>
@@ -284,18 +311,33 @@ export function InlineGoalCreation({
           {/* Step 3: Timeframe Slider */}
           {step === 3 && (
             <div className="space-y-4">
+              {/* Hidden fields to collect all form data */}
               <input type="hidden" name="title" value={formData.title} />
+              <input type="hidden" name="description" value={formData.description || ''} />
               <input type="hidden" name="progress" value={formData.progress} />
+              <input type="hidden" name="targetValue" value={formData.targetValue || 100} />
               <input type="hidden" name="durationValue" value={formData.duration.value} />
               <input type="hidden" name="durationUnit" value={formData.duration.unit} />
               
               {/* Use a static key to prevent unnecessary remounting */}
               <TimeframeSlider 
-                initialValue={0} // Default to Today
                 onChange={handleTimeframeChange}
                 key="timeframe-slider-static"
               />
               
+              {/* Display field-specific validation errors */}
+              {(state.errors?.description || state.errors?.targetValue) && (
+                <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md space-y-1">
+                  {state.errors?.description && (
+                    <p>{state.errors.description[0]}</p>
+                  )}
+                  {state.errors?.targetValue && (
+                    <p>{state.errors.targetValue[0]}</p>
+                  )}
+                </div>
+              )}
+              
+              {/* Display form-level errors */}
               {state.errors?._form && (
                 <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
                   {state.errors._form.map((error) => (

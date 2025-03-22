@@ -11,9 +11,10 @@ const createGoalSchema = z.object({
   description: z.string().optional(),
   progress: z.coerce.number().int().min(0).max(100).default(0),
   targetValue: z.coerce.number().int().positive().optional(),
+  // Make duration unit optional to handle special cases
   duration: z.object({
-    value: z.coerce.number().positive(),
-    unit: z.enum(['day', 'week', 'month', 'year'])
+    value: z.coerce.number().int().min(0), // Allow zero
+    unit: z.string() // Accept any string to handle special units like 'end-of-year'
   }).optional(),
 })
 
@@ -33,6 +34,12 @@ export type GoalFormState = {
 function calculateTargetDate(value: number, unit: string): Date {
   const today = new Date();
   const targetDate = new Date(today);
+  
+  // Special case: value 0 means "today" (end of day)
+  if (value === 0) {
+    targetDate.setHours(23, 59, 59, 999); // End of today
+    return targetDate;
+  }
   
   switch(unit) {
     case 'day':
@@ -71,7 +78,7 @@ export async function createGoal(
   const durationValue = formData.get("durationValue");
   const durationUnit = formData.get("durationUnit");
   
-  if (durationValue && durationUnit) {
+  if (durationValue !== null && durationUnit) {
     duration = {
       value: Number(durationValue),
       unit: durationUnit.toString()
@@ -101,14 +108,17 @@ export async function createGoal(
       ? calculateTargetDate(validatedDuration.value, validatedDuration.unit)
       : null;
 
+    console.log('validatedDuration', validatedDuration)
+
     await db.goal.create({
       data: {
         title,
         description: description || '',
         target: targetValue || 100,
         progress: progress || 0,
-        targetDate,
         userId: session.user.id,
+        targetDate: validatedDuration?.unit === 'habit' ? null : targetDate,
+        isHabit: validatedDuration?.unit === 'habit' ? true : false,
       },
     })
 
@@ -160,33 +170,56 @@ export async function updateGoalProgress(goalId: string, newProgress: number) {
   revalidatePath('/dashboard')
 }
 
-export async function deleteGoal(goalId: string) {
-  const session = await auth()
-  
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized")
+export async function deleteGoal(goalId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        error: "You must be logged in to delete a goal"
+      }
+    }
+
+    // Find the goal first to make sure it belongs to the user
+    const goal = await db.goal.findUnique({
+      where: {
+        id: goalId,
+      },
+    })
+
+    if (!goal) {
+      return {
+        success: false,
+        error: "Goal not found"
+      }
+    }
+
+    if (goal.userId !== session.user.id) {
+      return {
+        success: false,
+        error: "You don't have permission to delete this goal"
+      }
+    }
+
+    // Delete the goal
+    await db.goal.delete({
+      where: {
+        id: goalId,
+      },
+    })
+
+    // Revalidate the dashboard path to refresh the UI
+    revalidatePath('/dashboard')
+    
+    return { 
+      success: true
+    }
+  } catch (error) {
+    console.error("Failed to delete goal:", error)
+    return {
+      success: false,
+      error: "An unexpected error occurred while deleting the goal"
+    }
   }
-
-  // Find the goal first to make sure it belongs to the user
-  const goal = await db.goal.findUnique({
-    where: {
-      id: goalId,
-    },
-  })
-
-  if (!goal) {
-    throw new Error("Goal not found")
-  }
-
-  if (goal.userId !== session.user.id) {
-    throw new Error("Unauthorized")
-  }
-
-  await db.goal.delete({
-    where: {
-      id: goalId,
-    },
-  })
-
-  revalidatePath('/dashboard')
 } 

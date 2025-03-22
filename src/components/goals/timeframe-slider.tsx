@@ -24,8 +24,8 @@ interface TimeframeSliderProps {
   onChange?: (value: { value: number, unit: string }) => void;
 }
 
-export function TimeframeSlider({ initialValue = 0, onChange }: TimeframeSliderProps) {
-  const [sliderValue, setSliderValue] = useState(initialValue);
+export function TimeframeSlider({ onChange }: TimeframeSliderProps) {
+  const [sliderValue, setSliderValue] = useState(0);
   
   // Calculate the target date based on selected timeframe
   const getTargetDate = () => {
