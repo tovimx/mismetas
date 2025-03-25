@@ -1,17 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { TrashIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { deleteGoal } from '@/app/actions/goal-actions';
 import { useToast } from '@/components/ui/toaster';
 import { useRouter } from 'next/navigation';
 
 interface DeleteGoalButtonProps {
   goalId: string;
+  className?: string;
 }
 
-export function DeleteGoalButton({ goalId }: DeleteGoalButtonProps) {
+export function DeleteGoalButton({ goalId, className }: DeleteGoalButtonProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { addToast } = useToast();
@@ -20,7 +21,6 @@ export function DeleteGoalButton({ goalId }: DeleteGoalButtonProps) {
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-
       const result = await deleteGoal(goalId);
 
       if (result.success) {
@@ -29,8 +29,6 @@ export function DeleteGoalButton({ goalId }: DeleteGoalButtonProps) {
           description: 'Your goal has been successfully deleted.',
           variant: 'success',
         });
-
-        // Refresh the page to update the goals list
         router.refresh();
       } else {
         addToast({
@@ -45,7 +43,7 @@ export function DeleteGoalButton({ goalId }: DeleteGoalButtonProps) {
         description: 'An unexpected error occurred.',
         variant: 'error',
       });
-      console.error(error);
+      console.error('Failed to delete goal:', error);
     } finally {
       setIsDeleting(false);
       setShowConfirm(false);
@@ -83,10 +81,10 @@ export function DeleteGoalButton({ goalId }: DeleteGoalButtonProps) {
       variant="ghost"
       size="icon"
       onClick={() => setShowConfirm(true)}
-      aria-label="Delete goal"
-      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+      disabled={isDeleting}
+      className={`delete-button ${className || ''}`}
     >
-      <TrashIcon className="h-4 w-4" />
+      <Icon name="trash" className="h-4 w-4" />
     </Button>
   );
 }

@@ -1,7 +1,8 @@
-import { Plus } from 'lucide-react';
+import { Plus, Trash } from 'lucide-react';
 
 export const Icons = {
   plus: Plus,
+  trash: Trash,
   // Add more icons as needed
 } as const;
 

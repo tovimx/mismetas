@@ -64,14 +64,26 @@ model VerificationToken {
 
 model Goal {
   id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String
   title       String
   description String?
   target      Int?
   progress    Int       @default(0)
   targetDate  DateTime?
   isHabit     Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  userId      String
+  status      String    @default("IN_PROGRESS")
+  tasks       Task[]
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  title       String
+  completed   Boolean  @default(false)
+  goalId      String
+  goal        Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
 }

@@ -5,6 +5,7 @@ import { InlineGoalCreation } from '@/components/goals/inline-goal-creation';
 import { type Goal } from '@prisma/client';
 import { DeleteGoalButton } from '@/components/goals/delete-goal-button';
 import { Icon } from '@/components/ui/icon';
+import Link from 'next/link';
 
 type GoalSectionProps = {
   goals: Goal[];
@@ -58,14 +59,20 @@ export function GoalSection({ goals }: GoalSectionProps) {
           </div>
         ) : (
           goals.map(goal => (
-            <div key={goal.id} className="border rounded-lg p-4">
+            <Link
+              key={goal.id}
+              href={`/goals/${goal.id}`}
+              className="block border rounded-lg p-4 hover:bg-accent/50 transition-colors"
+            >
               <div className="flex justify-between items-start">
-                <h3 className="text-lg font-semibold">{goal.title}</h3>
+                <h3 className="text-lg font-semibold hover:text-primary">{goal.title}</h3>
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
                     {Math.min(100, Math.round((goal.progress / (goal.target || 100)) * 100))}%
                   </span>
-                  <DeleteGoalButton goalId={goal.id} />
+                  <div onClick={e => e.preventDefault()}>
+                    <DeleteGoalButton goalId={goal.id} className="delete-button" />
+                  </div>
                 </div>
               </div>
               {goal.description && (
@@ -83,7 +90,7 @@ export function GoalSection({ goals }: GoalSectionProps) {
                 <span>{goal.progress}</span>
                 <span>{goal.target || 100}</span>
               </div>
-            </div>
+            </Link>
           ))
         )}
       </div>
