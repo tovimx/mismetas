@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-interface GoalCardProps {
+interface GoalCardDetailsProps {
   goal: {
     id: string;
     title: string;
@@ -16,7 +16,7 @@ interface GoalCardProps {
   };
 }
 
-export function GoalCard({ goal }: GoalCardProps) {
+export function GoalCardDetails({ goal }: GoalCardDetailsProps) {
   const router = useRouter();
 
   return (

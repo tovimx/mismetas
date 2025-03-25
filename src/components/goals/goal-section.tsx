@@ -59,9 +59,8 @@ export function GoalSection({ goals }: GoalSectionProps) {
           </div>
         ) : (
           goals.map(goal => (
-            <Link
+            <div
               key={goal.id}
-              href={`/goals/${goal.id}`}
               className="block border rounded-lg p-4 hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between items-start">
@@ -90,7 +89,7 @@ export function GoalSection({ goals }: GoalSectionProps) {
                 <span>{goal.progress}</span>
                 <span>{goal.target || 100}</span>
               </div>
-            </Link>
+            </div>
           ))
         )}
       </div>
