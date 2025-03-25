@@ -15,12 +15,12 @@ MisMetas.com (English: "MyGoals") is a web application designed to help users:
 ## Technology Stack
 
 - **Frontend**: Next.js with App Router
-- **Styling**: Tailwind CSS with shadcn/ui components
+- **Styling**: Tailwind CSS with shadcn/ui / radix ui components
 - **Language**: TypeScript
 - **Form Management**: TanStack Form (type-safe form state handling)
 - **Database**: PostgreSQL
 - **ORM**: Prisma (TypeScript-first ORM with excellent PostgreSQL support)
-- **Authentication**: NextAuth.js with OAuth providers
+- **Authentication**: Auth.js with OAuth providers
 - **Hosting**: AWS
 
 ## Development Rules
@@ -40,7 +40,6 @@ MisMetas.com (English: "MyGoals") is a web application designed to help users:
    - `/src/components/` - Reusable UI components
    - `/src/features/` - Feature-specific components and logic
    - `/src/lib/` - Utility functions and shared code
-   - `/src/db/` - Database models and query functions
    - `/prisma/` - Prisma schema and migrations
 
 2. **Component Naming**:
