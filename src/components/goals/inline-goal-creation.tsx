@@ -11,6 +11,7 @@ import { ProgressSlider } from './progress-slider';
 import { TimeframeSlider } from './timeframe-slider';
 import { XIcon, ArrowRightIcon, CheckIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/toaster';
+import { Textarea } from '../ui/textarea';
 
 const initialState: GoalFormState = {};
 
@@ -39,6 +40,10 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
 
   const handleGoalTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, title: e.target.value }));
+  }, []);
+
+  const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFormData(prev => ({ ...prev, description: e.target.value }));
   }, []);
 
   const handleProgressChange = useCallback((progress: number) => {
@@ -107,15 +112,17 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
   const steps = useMemo(
     () => [
       { id: 1, label: 'Goal' },
-      { id: 2, label: 'Progress' },
-      { id: 3, label: 'Timeline' },
+      { id: 2, label: 'Description' },
+      { id: 3, label: 'Progress' },
+      { id: 4, label: 'Timeline' },
     ],
     []
   );
 
   const stepTitle = useMemo(() => {
     if (step === 1) return 'What is your goal?';
-    if (step === 2) return 'Track your progress';
+    if (step === 2) return 'Add a description';
+    if (step === 3) return 'Track your progress';
     return 'When do you want to complete it?';
   }, [step]);
 
@@ -269,9 +276,44 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
               </div>
             </div>
           )}
-
-          {/* Step 2: Progress Slider */}
+          {/* Step 2: Description */}
           {step === 2 && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">
+                  Add a description<span className="text-destructive"></span>
+                </Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  placeholder="Add a short description for your goal"
+                  value={formData.description}
+                  onChange={handleDescriptionChange}
+                  aria-describedby="description-error"
+                  className="text-lg py-6"
+                  autoFocus
+                />
+                {state.errors?.title && (
+                  <p id="title-error" className="text-sm text-destructive">
+                    {state.errors.title[0]}
+                  </p>
+                )}
+              </div>
+
+              <div className="pt-4">
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={handleCancel}>
+                    Cancel
+                  </Button>
+                  <Button type="button" onClick={nextStep} disabled={!formData.title.trim()}>
+                    Continue <ArrowRightIcon className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Step 2: Progress Slider */}
+          {step === 3 && (
             <div className="space-y-4">
               <ProgressSlider initialValue={formData.progress} onChange={handleProgressChange} />
 
@@ -289,7 +331,7 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
           )}
 
           {/* Step 3: Timeframe Slider */}
-          {step === 3 && (
+          {step === 4 && (
             <div className="space-y-4">
               {/* Hidden fields to collect all form data */}
               <input type="hidden" name="title" value={formData.title} />

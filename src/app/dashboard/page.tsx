@@ -26,6 +26,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="container mx-auto p-6">
+      <h1>Hello World</h1>
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
           {session.user.image && (
