@@ -2,6 +2,16 @@
 
 A collaborative goal-tracking web application that helps users set goals, track progress, and celebrate small wins.
 
+## Steps to run the project
+
+1.  create the .env file at the root and add the secrets. @tovimx
+2.  install docker.
+3.  make sure docker is running `docker ps`
+4.  run `npm run db:up`
+5.  run `npm run db:generate`
+6.  run `npm run db:push`
+7.  run the app `npm run dev:full`
+
 ## Project Overview
 
 MisMetas.com (English: "MyGoals") is a web application designed to help users:
