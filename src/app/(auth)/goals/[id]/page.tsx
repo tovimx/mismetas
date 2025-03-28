@@ -4,7 +4,6 @@ import { format } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { type Goal, type Task } from '@prisma/client';
-import { Metadata } from 'next';
 
 type GoalWithTasks = Goal & {
   tasks: Task[];
