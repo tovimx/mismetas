@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { type Goal, type Task } from '@prisma/client';
+import { Metadata } from 'next';
 
 type GoalWithTasks = Goal & {
   tasks: Task[];
@@ -26,16 +27,14 @@ async function getGoal(goalId: string) {
   return goal as GoalWithTasks | null;
 }
 
-export default async function GoalPage({
-  params,
-}: {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+export default async function GoalPage(props: {
+  params: Promise<{ id: string }>;
 }) {
-  const goal = await getGoal(params.id);
+  const { id } = await props.params;
+  const goal = await getGoal(id);
 
   if (!goal) {
-    throw new Error(`Goal with ID ${params.id} not found`);
+    throw new Error(`Goal with ID ${id} not found`);
   }
 
   return (
