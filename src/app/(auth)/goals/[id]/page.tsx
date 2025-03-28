@@ -27,10 +27,11 @@ async function getGoal(goalId: string) {
 }
 
 export default async function GoalPage({ params }: { params: { id: string } }) {
-  const goal = await getGoal(params.id);
+  const { id } = await params;
+  const goal = await getGoal(id);
 
   if (!goal) {
-    throw new Error(`Goal with ID ${params.id} not found`);
+    throw new Error(`Goal with ID ${id} not found`);
   }
 
   return (

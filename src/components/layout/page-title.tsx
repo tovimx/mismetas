@@ -16,14 +16,14 @@ export function PageTitle() {
   const routePattern = pathname
     .split('/')
     .map(segment => {
-      return Object.keys(params).some(param => params[param] === segment)
-        ? `[${Object.keys(params).find(param => params[param] === segment)}]`
-        : segment;
+      // Check if this segment is a dynamic parameter
+      const paramKey = Object.keys(params).find(key => params[key] === segment);
+      return paramKey ? `[${paramKey}]` : segment;
     })
     .join('/');
 
   const titleConfig = pageTitles[routePattern];
   const title = titleConfig || 'MisMetas';
 
-  return <h1 className="text-3xl font-bold">{title}</h1>;
+  return <h1 className="text-3xl">{title}</h1>;
 }
