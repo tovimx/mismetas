@@ -26,7 +26,12 @@ async function getGoal(goalId: string) {
   return goal as GoalWithTasks | null;
 }
 
-export default async function GoalPage({ params }: { params: { id: string } }) {
+export default async function GoalPage({
+  params,
+}: {
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const goal = await getGoal(params.id);
 
   if (!goal) {

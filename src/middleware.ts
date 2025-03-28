@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 const { auth } = NextAuth(authConfig);
 
-export default auth(async function middleware(req) {
+export default auth(async function middleware() {
   // For now, just let all requests through
   return NextResponse.next();
 });

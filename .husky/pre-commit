@@ -1,1 +1,2 @@
-npx lint-staged
+echo "Running pre-commit checks..."
+npm run lint && npm test
