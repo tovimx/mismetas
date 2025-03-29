@@ -1,7 +1,7 @@
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { GoalSection } from '@/components/goals/goal-section';
-import { SummarySection } from '@/components/auth/dashboard/summary-section';
+import { SummarySection } from '@/components/dashboard/summary';
 
 // Server-side function to fetch user goals using email as fallback
 async function getUserGoals(userId: string) {
