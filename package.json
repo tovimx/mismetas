@@ -21,7 +21,7 @@
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed",
     "dev:full": "npm run db:up && npm run dev",
-    "prepare": "husky",
+    "prepare": "[ \"$NODE_ENV\" != \"production\" ] && husky || exit 0",
     "test": "jest",
     "test:watch": "jest --watch"
   },
