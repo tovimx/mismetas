@@ -58,7 +58,6 @@ describe('LoginForm', () => {
 
   // Third test: verify error handling
   it('shows error message when sign in fails', async () => {
-    // Arrange: Mock the signIn function to reject with an error
     const signInMock = signIn as jest.Mock;
     signInMock.mockRejectedValue(new Error('Error signing in'));
 
