@@ -7,22 +7,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(db),
   session: { strategy: 'jwt' as const },
+  debug: true,
   callbacks: {
     ...authConfig.callbacks,
     async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
-        if (token.name) session.user.name = token.name;
-        if (token.email) session.user.email = token.email;
-        if (token.picture) session.user.image = token.picture;
+      try {
+        if (session.user && token.sub) {
+          session.user.id = token.sub;
+          if (token.name) session.user.name = token.name;
+          if (token.email) session.user.email = token.email;
+          if (token.picture) session.user.image = token.picture;
+        }
+        return session;
+      } catch (error) {
+        console.error('Session callback error:', error);
+        throw error;
       }
-      return session;
     },
     async jwt({ token, user, account }) {
-      if (user) {
-        token.id = user.id;
+      try {
+        if (user) {
+          token.id = user.id;
+        }
+        return token;
+      } catch (error) {
+        console.error('JWT callback error:', error);
+        throw error;
       }
-      return token;
+    },
+  },
+  events: {
+    signIn({ user, account }) {
+      console.log('Sign in event:', { 
+        userId: user?.id,
+        provider: account?.provider,
+        email: user?.email
+      });
     },
   },
 });
