@@ -6,6 +6,7 @@ const authConfig: NextAuthConfig = {
   session: { strategy: 'jwt' as const },
   pages: { signIn: '/login' },
   debug: true,
+  trustHost: true,
   callbacks: {
     authorized: async ({ auth }) => !!auth,
     async signIn({ account, profile }) {
