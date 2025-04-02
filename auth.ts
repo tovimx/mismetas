@@ -3,6 +3,14 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { db } from '@/lib/db';
 import authConfig from './auth.config';
 
+// Log env variables for debugging (values will be undefined in logs for security)
+console.log('Auth configuration environment check:', { 
+  authUrlConfigured: !!process.env.AUTH_URL,
+  googleIdConfigured: !!process.env.AUTH_GOOGLE_ID,
+  googleSecretConfigured: !!process.env.AUTH_GOOGLE_SECRET,
+  authSecretConfigured: !!process.env.AUTH_SECRET
+});
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(db),

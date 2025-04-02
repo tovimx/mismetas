@@ -1,7 +1,7 @@
 import Google from 'next-auth/providers/google';
 import type { NextAuthConfig } from 'next-auth';
 
-export default {
+const authConfig: NextAuthConfig = {
   providers: [Google],
   session: { strategy: 'jwt' as const },
   pages: { signIn: '/login' },
@@ -13,4 +13,6 @@ export default {
       return true;
     },
   },
-} satisfies NextAuthConfig;
+};
+
+export default authConfig;
