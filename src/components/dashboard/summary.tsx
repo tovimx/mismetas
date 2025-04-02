@@ -1,6 +1,6 @@
 import { Goal } from '@prisma/client';
 
-function GoalCard({
+function SummaryCard({
   title,
   value,
   description,
@@ -30,17 +30,17 @@ export function SummarySection({ goals }: { goals: Goal[] }) {
       : 0;
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <GoalCard
+      <SummaryCard
         title="Active Goals"
         value={activeGoalsCount}
         description="Goals you're currently working on"
       />
-      <GoalCard
+      <SummaryCard
         title="Completed Goals"
         value={completedGoalsCount}
         description="Goals you've successfully achieved"
       />
-      <GoalCard
+      <SummaryCard
         title="Overall Progress"
         value={`${overallProgress}%`}
         description="Your average completion rate"
