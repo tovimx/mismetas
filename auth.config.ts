@@ -1,25 +1,37 @@
 import Google from 'next-auth/providers/google';
 import type { NextAuthConfig } from 'next-auth';
 
-const authConfig: NextAuthConfig = {
+// This is the base config - ONLY edge-compatible options
+export const authConfig = {
   providers: [
     Google({
-      clientId: process.env.AUTH_GOOGLE_ID!,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
     }),
+    // Add other providers here if needed
   ],
-  session: { strategy: 'jwt' as const },
-  pages: { signIn: '/login' },
-  debug: process.env.NODE_ENV !== 'production',
-  trustHost: true,
-  secret: process.env.AUTH_SECRET!,
+  pages: {
+    signIn: '/login', // Your custom login page
+  },
+  // Add callbacks necessary for middleware or basic auth flow, but NOT database interactions
   callbacks: {
-    authorized: async ({ auth }) => !!auth,
-    async signIn({ account, profile }) {
-      console.log('Sign in attempt:', { accountType: account?.provider, email: profile?.email });
-      return true;
+    // authorized callback is often used in middleware
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isOnDashboard = nextUrl.pathname.startsWith('/dashboard'); // Example protected route
+
+      if (isOnDashboard) {
+        if (isLoggedIn) return true; // Allow access if logged in
+        return false; // Redirect unauthenticated users to login page
+      } else if (isLoggedIn) {
+        // Optionally redirect logged-in users from login page to dashboard
+        // if (nextUrl.pathname === '/login') {
+        //   return Response.redirect(new URL('/dashboard', nextUrl));
+        // }
+      }
+      return true; // Allow access to other pages by default
     },
   },
-};
-
-export default authConfig;
+  // trustHost is generally recommended for Vercel deployments
+  trustHost: true,
+} satisfies NextAuthConfig;

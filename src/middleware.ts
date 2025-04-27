@@ -1,12 +1,16 @@
-import authConfig from '../auth.config';
 import NextAuth from 'next-auth';
-import { NextResponse } from 'next/server';
+import { authConfig } from '../auth.config'; // Import the edge-compatible config
 
+// Initialize NextAuth with ONLY the edge-compatible config
 const { auth } = NextAuth(authConfig);
 
-export default auth(async function middleware() {
-  // For now, just let all requests through
-  return NextResponse.next();
+// Use the edge-compatible 'auth' helper for middleware logic
+export default auth(req => {
+  // Your middleware logic here.
+  // The 'req.auth' object will contain the session info if authenticated.
+  // The 'authorized' callback in auth.config.ts handles redirection logic.
+  console.log('Middleware running for:', req.nextUrl.pathname);
+  // You can add more logic here if needed, beyond the authorized callback
 });
 
 // Optionally, don't invoke Middleware on some paths
