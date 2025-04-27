@@ -6,11 +6,9 @@ frontend:
         - npm ci --include=dev
         - npx prisma generate
         - echo "AUTH_SECRET=${AUTH_SECRET}" >> .env.production
-        # - echo "AUTH_GOOGLE_ID=${AUTH_GOOGLE_ID}" >> .env.production
-        # - echo "AUTH_GOOGLE_SECRET=${AUTH_GOOGLE_SECRET}" >> .env.production
-        # - echo "DATABASE_URL=${DATABASE_URL}" >> .env.production
-        # - echo "AUTH_URL=https://mismetas.com/api/auth" >> .env.production
-        - echo "Variables wrote to .env.production:" && cat .env.production | cut -d '=' -f1
+        - echo "AUTH_GOOGLE_ID=${AUTH_GOOGLE_ID}" >> .env.production
+        - echo "AUTH_GOOGLE_SECRET=${AUTH_GOOGLE_SECRET}" >> .env.production
+        - echo "DATABASE_URL=${DATABASE_URL}" >> .env.production
     build:
       commands:
         - npm run build
