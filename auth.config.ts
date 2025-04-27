@@ -18,23 +18,36 @@ export const authConfig = {
     // authorized callback is often used in middleware
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      console.log('[AUTHZ] Path:', nextUrl.pathname, '| Logged In:', isLoggedIn);
-      // TEMPORARILY REMOVE REDIRECT LOGIC TO DEBUG "Invalid URL" error
-      // Always return true for now to see if the URL error stops
-      return true;
+      const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
 
-      // Original Logic (commented out):
-      // const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
-      //
-      // if (isOnDashboard) {
-      //   if (isLoggedIn) return true;
-      //   return false;
-      // } else if (isLoggedIn) {
-      //   // if (nextUrl.pathname === '/login') {
-      //   //   return Response.redirect(new URL('/dashboard', nextUrl));
-      //   // }
-      // }
-      // return true;
+      console.log(
+        '[AUTHZ] Path:',
+        nextUrl.pathname,
+        '| Logged In:',
+        isLoggedIn,
+        '| OnDashboard:',
+        isOnDashboard
+      );
+
+      if (isOnDashboard) {
+        if (isLoggedIn) {
+          console.log('[AUTHZ] Access GRANTED to dashboard');
+          return true; // Allow access if logged in
+        }
+        console.log('[AUTHZ] Access DENIED to dashboard, redirecting to /login');
+        // Redirect unauthenticated users to login page using string concatenation
+        const loginUrl = `${nextUrl.origin}/login`;
+        return Response.redirect(loginUrl);
+      } else if (isLoggedIn) {
+        // Optionally redirect logged-in users from login page to dashboard
+        if (nextUrl.pathname === '/login') {
+          console.log('[AUTHZ] Already logged in, redirecting from /login to /dashboard');
+          const dashboardUrl = `${nextUrl.origin}/dashboard`;
+          return Response.redirect(dashboardUrl);
+        }
+      }
+      console.log('[AUTHZ] Access allowed to non-dashboard page');
+      return true; // Allow access to other pages by default
     },
   },
   // trustHost is generally recommended for Vercel deployments
