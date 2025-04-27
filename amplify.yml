@@ -5,10 +5,10 @@ frontend:
       commands:
         - npm ci --include=dev
         - npx prisma generate
-        - env | grep -e AUTH_SECRET -e AUTH_GOOGLE_ID -e AUTH_GOOGLE_SECRET -e DATABASE_URL >> .env.production
-        - env | grep -e NEXT_PUBLIC_ >> .env.production
     build:
       commands:
+        - env | grep -e AUTH_SECRET -e AUTH_GOOGLE_ID -e AUTH_GOOGLE_SECRET -e DATABASE_URL >> .env.production
+        - env | grep -e NEXT_PUBLIC_ >> .env.production
         - npm run build
   artifacts:
     baseDirectory: .next
