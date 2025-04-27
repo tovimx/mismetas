@@ -10,6 +10,7 @@ frontend:
         - echo "AUTH_GOOGLE_SECRET=${AUTH_GOOGLE_SECRET}" >> .env.production
         - echo "DATABASE_URL=${DATABASE_URL}" >> .env.production
         - echo "AUTH_URL=${AUTH_URL}" >> .env.production
+        - echo "NEXTAUTH_URL=${NEXTAUTH_URL}" >> .env.production
     build:
       commands:
         - npm run build

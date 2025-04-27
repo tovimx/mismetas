@@ -19,6 +19,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(db),
   session: { strategy: 'jwt' as const },
   debug: true,
+  logger: {
+    error: (error: Error) => {
+      console.error('NextAuth error:', error);
+    },
+    warn: (code: string) => {
+      console.warn('NextAuth warning:', code);
+    },
+    debug: (code: string, metadata: unknown) => {
+      console.log('NextAuth debug:', code, metadata);
+    },
+  },
   callbacks: {
     ...authConfig.callbacks,
     async session({ session, token }) {
