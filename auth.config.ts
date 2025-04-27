@@ -10,7 +10,7 @@ const authConfig: NextAuthConfig = {
   ],
   session: { strategy: 'jwt' as const },
   pages: { signIn: '/login' },
-  debug: true,
+  debug: process.env.NODE_ENV !== 'production',
   trustHost: true,
   secret: process.env.AUTH_SECRET!,
   callbacks: {
