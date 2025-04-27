@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { db } from '@/lib/db';
-import authConfig from './auth.config';
+import { authConfig } from './auth.config';
 
 console.log('ENV CHECK:', {
   AUTH_SECRET: process.env.AUTH_SECRET,
@@ -12,22 +12,24 @@ console.log('Auth configuration environment check:', {
   googleIdConfigured: !!process.env.AUTH_GOOGLE_ID,
   googleSecretConfigured: !!process.env.AUTH_GOOGLE_SECRET,
   authSecretConfigured: !!process.env.AUTH_SECRET,
+  databaseUrlConfigured: !!process.env.DATABASE_URL,
 });
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(db),
   session: { strategy: 'jwt' as const },
+  secret: process.env.AUTH_SECRET,
   debug: true,
   logger: {
     error: (error: Error) => {
-      console.error('NextAuth error:', error);
+      console.error('AUTH.JS SERVER ERROR:', error);
     },
     warn: (code: string) => {
-      console.warn('NextAuth warning:', code);
+      console.warn('AUTH.JS SERVER WARNING:', code);
     },
     debug: (code: string, metadata: unknown) => {
-      console.log('NextAuth debug:', code, metadata);
+      console.log('AUTH.JS SERVER DEBUG:', code, metadata);
     },
   },
   callbacks: {
@@ -60,11 +62,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   events: {
     signIn({ user, account }) {
-      console.log('Sign in event:', {
-        userId: user?.id,
-        provider: account?.provider,
-        email: user?.email,
-      });
+      console.log(`SIGN IN EVENT: User ${user?.id} signed in.`);
     },
   },
 });
