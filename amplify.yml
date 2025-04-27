@@ -5,13 +5,12 @@ frontend:
       commands:
         - npm ci --include=dev
         - npx prisma generate
-        - touch .env.production
-        - env | grep -e AUTH_SECRET >> .env.production
-        - env | grep -e AUTH_GOOGLE_ID >> .env.production
-        - env | grep -e AUTH_GOOGLE_SECRET >> .env.production
-        - env | grep -e DATABASE_URL >> .env.production
-        - env | grep -e NEXT_PUBLIC_ >> .env.production
-        - echo "AUTH_URL=https://mismetas.com/api/auth" >> .env.production
+        - echo "AUTH_SECRET=${AUTH_SECRET}" >> .env.production
+        # - echo "AUTH_GOOGLE_ID=${AUTH_GOOGLE_ID}" >> .env.production
+        # - echo "AUTH_GOOGLE_SECRET=${AUTH_GOOGLE_SECRET}" >> .env.production
+        # - echo "DATABASE_URL=${DATABASE_URL}" >> .env.production
+        # - echo "AUTH_URL=https://mismetas.com/api/auth" >> .env.production
+        - echo "Variables wrote to .env.production:" && cat .env.production | cut -d '=' -f1
     build:
       commands:
         - npm run build

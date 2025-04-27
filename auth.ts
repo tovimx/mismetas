@@ -3,6 +3,9 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { db } from '@/lib/db';
 import authConfig from './auth.config';
 
+console.log('ENV CHECK:', {
+  AUTH_SECRET: process.env.AUTH_SECRET,
+});
 // Log env variables for debugging (values will be undefined in logs for security)
 console.log('Auth configuration environment check:', {
   authUrlConfigured: !!process.env.AUTH_URL,
