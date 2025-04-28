@@ -20,14 +20,29 @@ const createGoalSchema = z.object({
     .optional(),
 });
 
+// Define Zod schema for validation
+const TaskSchema = z.object({
+  title: z.string().min(1, 'Task title cannot be empty.'),
+});
+
+const GoalWithTasksSchema = z.object({
+  title: z.string().min(3, { message: 'Goal title must be at least 3 characters.' }),
+  description: z.string().optional(),
+  target: z.number().int().positive().optional().default(100),
+  targetDate: z.date().optional().nullable(),
+  tasks: z.array(TaskSchema).min(1, 'At least one task is required.'), // Ensure AI provides tasks
+});
+
 export type GoalFormState = {
   errors?: {
     title?: string[];
     description?: string[];
     progress?: string[];
-    targetValue?: string[];
+    target?: string[];
     duration?: string[];
     _form?: string[];
+    tasks?: string[]; // Errors related to the tasks array itself
+    'tasks.?.title'?: string[]; // Errors for specific task titles (if needed)
   };
   success?: boolean;
 };
@@ -227,5 +242,54 @@ export async function deleteGoal(goalId: string): Promise<{ success: boolean; er
       success: false,
       error: 'An unexpected error occurred while deleting the goal',
     };
+  }
+}
+
+export async function createGoalWithTasks(
+  payload: z.infer<typeof GoalWithTasksSchema>
+): Promise<GoalFormState> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { errors: { _form: ['User not authenticated'] } };
+  }
+
+  const validationResult = GoalWithTasksSchema.safeParse(payload);
+
+  if (!validationResult.success) {
+    return {
+      errors: validationResult.error.flatten().fieldErrors,
+    };
+  }
+
+  const { tasks, ...goalData } = validationResult.data;
+
+  try {
+    await db.goal.create({
+      data: {
+        ...goalData,
+        userId: session.user.id,
+        status: 'IN_PROGRESS', // Set default status
+        progress: 0, // Ensure progress starts at 0
+        tasks: {
+          // Use Prisma nested createMany
+          createMany: {
+            data: tasks.map(task => ({
+              title: task.title,
+              completed: false, // Default task to not completed
+            })),
+          },
+        },
+      },
+    });
+
+    revalidatePath('/dashboard'); // Revalidate relevant path
+    return { success: true };
+  } catch (error) {
+    console.error('Database error creating goal with tasks:', error);
+    if (error instanceof Error) {
+      // You could check for specific Prisma errors here if needed
+      return { errors: { _form: [error.message] } };
+    }
+    return { errors: { _form: ['Database error: Failed to create goal.'] } };
   }
 }

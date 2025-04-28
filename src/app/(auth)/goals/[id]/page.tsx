@@ -26,9 +26,7 @@ async function getGoal(goalId: string) {
   return goal as GoalWithTasks | null;
 }
 
-export default async function GoalPage(props: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function GoalPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
   const goal = await getGoal(id);
 
@@ -61,6 +59,31 @@ export default async function GoalPage(props: {
             <p className="text-gray-600 dark:text-gray-300">
               {goal.targetDate ? format(goal.targetDate, 'PPP') : 'No target date set'}
             </p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-3 border-t pt-4">Tasks</h3>
+            {goal.tasks && goal.tasks.length > 0 ? (
+              <ul className="space-y-2">
+                {goal.tasks.map(task => (
+                  <li
+                    key={task.id}
+                    className="flex items-center justify-between p-2 border rounded-md bg-muted/50"
+                  >
+                    <span className={task.completed ? 'line-through text-muted-foreground' : ''}>
+                      {task.title}
+                    </span>
+                    <Badge variant={task.completed ? 'secondary' : 'outline'}>
+                      {task.completed ? 'Done' : 'To Do'}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">
+                No tasks added for this goal yet.
+              </p>
+            )}
           </div>
         </div>
       </CardContent>

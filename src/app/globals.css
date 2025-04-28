@@ -80,9 +80,6 @@
 }
 
 @layer base {
-  * {
-    @apply border-border ring-1 ring-[--ring] ring-opacity-50 rounded-md;
-  }
   body {
     @apply bg-background text-foreground;
   }
@@ -92,15 +89,15 @@
   .btn {
     @apply rounded-md;
   }
-  
+
   .card {
     @apply rounded-lg;
   }
-  
+
   .input {
     @apply rounded-md;
   }
-  
+
   .dropdown {
     @apply rounded-md;
   }
