@@ -25,12 +25,14 @@ const TaskSchema = z.object({
   title: z.string().min(1, 'Task title cannot be empty.'),
 });
 
-const GoalWithTasksSchema = z.object({
+// Updated schema for goal creation to include all suggestions and selected ones
+const GoalWithTasksAndSelectionSchema = z.object({
   title: z.string().min(3, { message: 'Goal title must be at least 3 characters.' }),
   description: z.string().optional(),
   target: z.number().int().positive().optional().default(100),
   targetDate: z.date().optional().nullable(),
-  tasks: z.array(TaskSchema).min(1, 'At least one task is required.'), // Ensure AI provides tasks
+  allSuggestedTasks: z.array(TaskSchema).min(1, 'At least one task suggestion is required.'),
+  selectedTaskTitles: z.array(z.string()).min(1, 'At least one task must be selected.'), // Array of titles of selected tasks
 });
 
 export type GoalFormState = {
@@ -41,8 +43,8 @@ export type GoalFormState = {
     target?: string[];
     duration?: string[];
     _form?: string[];
-    tasks?: string[]; // Errors related to the tasks array itself
-    'tasks.?.title'?: string[]; // Errors for specific task titles (if needed)
+    allSuggestedTasks?: string[];
+    selectedTaskTitles?: string[];
   };
   success?: boolean;
 };
@@ -246,14 +248,14 @@ export async function deleteGoal(goalId: string): Promise<{ success: boolean; er
 }
 
 export async function createGoalWithTasks(
-  payload: z.infer<typeof GoalWithTasksSchema>
+  payload: z.infer<typeof GoalWithTasksAndSelectionSchema> // Use the new schema
 ): Promise<GoalFormState> {
   const session = await auth();
   if (!session?.user?.id) {
     return { errors: { _form: ['User not authenticated'] } };
   }
 
-  const validationResult = GoalWithTasksSchema.safeParse(payload);
+  const validationResult = GoalWithTasksAndSelectionSchema.safeParse(payload);
 
   if (!validationResult.success) {
     return {
@@ -261,28 +263,31 @@ export async function createGoalWithTasks(
     };
   }
 
-  const { tasks, ...goalData } = validationResult.data;
+  // Destructure allSuggestedTasks and selectedTaskTitles along with goalData
+  const { allSuggestedTasks, selectedTaskTitles, ...goalData } = validationResult.data;
 
   try {
     await db.goal.create({
       data: {
         ...goalData,
         userId: session.user.id,
-        status: 'IN_PROGRESS', // Set default status
-        progress: 0, // Ensure progress starts at 0
+        status: 'IN_PROGRESS',
+        progress: 0,
         tasks: {
-          // Use Prisma nested createMany
           createMany: {
-            data: tasks.map(task => ({
+            data: allSuggestedTasks.map(task => ({
               title: task.title,
-              completed: false, // Default task to not completed
+              completed: false,
+              // Set status based on whether the task title is in selectedTaskTitles
+              status: selectedTaskTitles.includes(task.title) ? 'ACCEPTED' : 'SUGGESTED',
             })),
           },
         },
       },
     });
 
-    revalidatePath('/dashboard'); // Revalidate relevant path
+    revalidatePath('/dashboard');
+    revalidatePath('/goals'); // Also revalidate the general goals path
     return { success: true };
   } catch (error) {
     console.error('Database error creating goal with tasks:', error);

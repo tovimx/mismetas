@@ -79,12 +79,19 @@ model Goal {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+enum TaskStatus {
+  ACCEPTED
+  SUGGESTED
+  COMPLETED
+}
+
 model Task {
-  id          String   @id @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
   title       String
-  completed   Boolean  @default(false)
+  completed   Boolean    @default(false)
+  status      TaskStatus @default(SUGGESTED)
   goalId      String
-  goal        Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  goal        Goal       @relation(fields: [goalId], references: [id], onDelete: Cascade)
 }

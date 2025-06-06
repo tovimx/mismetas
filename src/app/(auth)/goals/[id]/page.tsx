@@ -3,7 +3,9 @@ import { db } from '@/lib/db';
 import { format } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { type Goal, type Task } from '@prisma/client';
+import { Button } from '@/components/ui/button';
+import { PlusCircleIcon } from 'lucide-react';
+import { type Goal, type Task, TaskStatus } from '@prisma/client';
 
 type GoalWithTasks = Goal & {
   tasks: Task[];
@@ -19,7 +21,11 @@ async function getGoal(goalId: string) {
       userId: session.user.id,
     },
     include: {
-      tasks: true,
+      tasks: {
+        orderBy: {
+          createdAt: 'asc',
+        },
+      },
     },
   });
 
@@ -33,6 +39,14 @@ export default async function GoalPage(props: { params: Promise<{ id: string }> 
   if (!goal) {
     throw new Error(`Goal with ID ${id} not found`);
   }
+
+  const acceptedTasks = goal.tasks.filter(
+    task => task.status === TaskStatus.ACCEPTED && !task.completed
+  );
+  const completedTasks = goal.tasks.filter(
+    task => task.status === TaskStatus.ACCEPTED && task.completed
+  );
+  const suggestedTasks = goal.tasks.filter(task => task.status === TaskStatus.SUGGESTED);
 
   return (
     <Card>
@@ -48,43 +62,95 @@ export default async function GoalPage(props: { params: Promise<{ id: string }> 
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div>
             <h3 className="text-lg font-semibold mb-2">Description</h3>
-            <p className="text-gray-600 dark:text-gray-300">{goal.description}</p>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Target Date</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              {goal.targetDate ? format(goal.targetDate, 'PPP') : 'No target date set'}
+            <p className="text-muted-foreground">
+              {goal.description || 'No description provided.'}
             </p>
           </div>
 
+          {goal.targetDate && (
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Target Date</h3>
+              <p className="text-muted-foreground">{format(goal.targetDate, 'PPP')}</p>
+            </div>
+          )}
+
           <div>
-            <h3 className="text-lg font-semibold mb-3 border-t pt-4">Tasks</h3>
-            {goal.tasks && goal.tasks.length > 0 ? (
-              <ul className="space-y-2">
-                {goal.tasks.map(task => (
+            <h3 className="text-xl font-semibold mb-4 border-t pt-6">Active Tasks</h3>
+            {acceptedTasks.length > 0 ? (
+              <ul className="space-y-3">
+                {acceptedTasks.map(task => (
                   <li
                     key={task.id}
-                    className="flex items-center justify-between p-2 border rounded-md bg-muted/50"
+                    className="flex items-center justify-between p-3 border rounded-lg bg-background shadow-sm hover:shadow-md transition-shadow duration-200"
                   >
-                    <span className={task.completed ? 'line-through text-muted-foreground' : ''}>
-                      {task.title}
-                    </span>
-                    <Badge variant={task.completed ? 'secondary' : 'outline'}>
-                      {task.completed ? 'Done' : 'To Do'}
-                    </Badge>
+                    <span className="text-base">{task.title}</span>
+                    <Button variant="outline" size="sm">
+                      Mark as Done
+                    </Button>
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="text-sm text-muted-foreground italic">
-                No tasks added for this goal yet.
+                No active tasks for this goal yet. Add some from the suggestions below or create new
+                ones!
               </p>
             )}
           </div>
+
+          {completedTasks.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3 text-muted-foreground">Completed Tasks</h3>
+              <ul className="space-y-2">
+                {completedTasks.map(task => (
+                  <li
+                    key={task.id}
+                    className="flex items-center justify-between p-2 border rounded-md bg-muted/30 opacity-70"
+                  >
+                    <span className="line-through text-muted-foreground">{task.title}</span>
+                    <Badge variant="secondary">Done</Badge>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {suggestedTasks.length > 0 && (
+            <div>
+              <h3 className="text-xl font-semibold mb-4 border-t pt-6 text-muted-foreground">
+                Suggested Tasks <span className="text-sm font-normal">(Unlockable)</span>
+              </h3>
+              <ul className="space-y-3">
+                {suggestedTasks.map(task => (
+                  <li
+                    key={task.id}
+                    className="flex items-center justify-between p-3 border border-dashed rounded-lg bg-muted/20 opacity-80 hover:opacity-100 transition-opacity"
+                  >
+                    <span className="text-base text-muted-foreground">{task.title}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:text-primary-focus"
+                    >
+                      <PlusCircleIcon className="h-4 w-4 mr-2" />
+                      Add to Goal
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {acceptedTasks.length === 0 &&
+            suggestedTasks.length === 0 &&
+            completedTasks.length === 0 && (
+              <p className="text-sm text-muted-foreground italic border-t pt-6">
+                No tasks (active, completed, or suggested) found for this goal.
+              </p>
+            )}
         </div>
       </CardContent>
     </Card>
