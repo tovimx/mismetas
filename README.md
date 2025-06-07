@@ -31,6 +31,7 @@ MisMetas.com (English: "MyGoals") is a web application designed to help users:
 - **Database**: PostgreSQL
 - **ORM**: Prisma (TypeScript-first ORM with excellent PostgreSQL support)
 - **Authentication**: NextAuth.js with OAuth providers
+- **AI Integration**: Google Generative AI (Gemini) and Anthropic Claude
 - **Hosting**: AWS
 
 ## Development Rules
@@ -50,6 +51,7 @@ MisMetas.com (English: "MyGoals") is a web application designed to help users:
    - `/src/components/` - Reusable UI components
    - `/src/features/` - Feature-specific components and logic
    - `/src/lib/` - Utility functions and shared code
+   - `/src/lib/api/` - API abstraction layer (see below)
    - `/src/db/` - Database models and query functions
    - `/prisma/` - Prisma schema and migrations
 
@@ -63,6 +65,44 @@ MisMetas.com (English: "MyGoals") is a web application designed to help users:
    - RESTful API design principles
    - Consistent error handling and response formats
    - Authentication middleware for protected routes
+
+### API Abstraction Layer
+
+This project uses an API abstraction layer pattern to separate API calls from components. This makes the codebase more maintainable, testable, and flexible.
+
+1. **Architecture**:
+   ```
+   src/lib/api/
+   ├── client.ts      # Base API client with error handling
+   ├── types.ts       # Centralized TypeScript types
+   └── services/      # Domain-specific service modules
+       ├── goals.ts   # Goal-related API functions
+       └── ...        # Other service modules
+   ```
+
+2. **Usage Rules**:
+   - **Never use `fetch` directly in components**
+   - Always use service functions from `/lib/api/services/`
+   - All API types must be defined in `/lib/api/types.ts`
+   - Service functions should handle errors gracefully
+
+3. **Benefits**:
+   - Easy switching between REST APIs and Server Actions
+   - Mockable service functions for testing
+   - Type-safe API contracts
+   - Consistent error handling
+
+4. **Example**:
+   ```typescript
+   // ✅ GOOD: Using service function
+   import { createGoal } from '@/lib/api/services/goals';
+   const goal = await createGoal(data);
+
+   // ❌ BAD: Direct fetch in component
+   const response = await fetch('/api/goals', {...});
+   ```
+
+For detailed guidelines, see [CLAUDE.md](./CLAUDE.md).
 
 ### Database Rules
 
