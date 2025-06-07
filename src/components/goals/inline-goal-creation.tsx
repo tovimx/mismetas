@@ -14,6 +14,7 @@ import { AiPlanConfirmationModal, type AcceptedPlanData } from './ai-plan-confir
 import { addDays, addWeeks, addMonths, addYears, endOfYear } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { validateGoalInput } from '@/lib/goal-validation';
+import { validateGoal, generateGoalPlan, getTargetOptions } from '@/lib/api/services/goals';
 
 interface AiPlan {
   tasks: { title: string }[];
@@ -75,31 +76,21 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
   const validateWithAI = useCallback(async (goalText: string) => {
     try {
       setGoalValidation({ status: 'validating' });
-      const response = await fetch('/api/ai/validate-goal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goalText }),
-      });
       
-      if (!response.ok) throw new Error('Validation failed');
-      
-      const result = await response.json();
+      const result = await validateGoal(goalText);
       
       if (result.isValid) {
         setGoalValidation({ status: 'valid' });
       } else {
         setGoalValidation({ 
           status: 'invalid', 
-          message: result.feedback || 'Please enter a more specific goal'
+          message: result.feedback || '🤔 This doesn\'t look like a personal goal'
         });
       }
     } catch (error) {
-      // Fall back to client validation result if AI fails
-      const validation = validateGoalInput(goalText);
-      setGoalValidation({ 
-        status: validation.isValid ? 'valid' : 'invalid',
-        message: validation.message
-      });
+      // Error handling is done in the service layer
+      // If we get here, it means client validation was already applied
+      console.error('Goal validation error:', error);
     }
   }, []);
 
@@ -177,16 +168,11 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
     setIsTargetOptionsLoading(true);
     setAiTargetOptions(null);
     try {
-      const response = await fetch('/api/ai/suggest-target-options', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          goalName: formData.title,
-          goalDescription: formData.description,
-        }),
+      const data = await getTargetOptions({
+        goalName: formData.title,
+        goalDescription: formData.description,
       });
-      if (!response.ok) throw new Error('Failed to fetch target options');
-      const data = await response.json();
+      
       setAiTargetOptions(data.options || []);
       if (data.options && data.options.length > 0) {
         setSelectedTargetValue(data.options[0].value);
@@ -195,25 +181,11 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
     } catch (error) {
       console.error('Error fetching target options:', error);
 
-      let errorDescription = 'Could not fetch target suggestions from the AI.';
-      // Try to parse specific error details from the API response
-      if (error instanceof Error && (error as any).response) {
-        try {
-          const errorData = await (error as any).response.json();
-          if (errorData && errorData.details) {
-            errorDescription = errorData.details;
-          }
-        } catch (jsonError) {
-          console.error('Failed to parse error response JSON:', jsonError);
-          // Use default error message if JSON parsing fails
-        }
-      } else if (error instanceof Error) {
-        errorDescription = error.message; // Use generic error message if not a response error
-      }
+      const errorDescription = error instanceof Error ? error.message : 'Could not fetch target suggestions from the AI.';
 
       addToast({
         title: 'AI Error',
-        description: errorDescription, // Use the specific or fallback message
+        description: errorDescription,
         variant: 'error',
       });
       setAiTargetOptions([]); // Still show empty options / allow proceeding
@@ -281,23 +253,13 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
     }
 
     try {
-      const response = await fetch('/api/ai/generate-goal-plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          goalName: formData.title,
-          goalDescription: formData.description,
-          goalTarget: selectedTargetValue,
-          targetDate: targetDateISO,
-        }),
+      const planData = await generateGoalPlan({
+        goalName: formData.title,
+        goalDescription: formData.description || '',
+        goalTarget: selectedTargetValue,
+        targetDate: targetDateISO,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || `AI Plan API failed`);
-      }
-
-      const planData: AiPlan = await response.json();
       setAiPlan(planData);
       setIsModalOpen(true);
     } catch (error) {
@@ -482,10 +444,18 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
                   )}
                 />
                 {goalValidation.status === 'valid' && (
-                  <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" />
+                  <CheckCircle 
+                    data-testid="valid-checkmark"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" 
+                  />
                 )}
                 {goalValidation.status === 'validating' && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 
+                      data-testid="loading-spinner"
+                      className="h-5 w-5 animate-spin text-muted-foreground" 
+                    />
+                  </div>
                 )}
               </div>
               {goalValidation.message && (

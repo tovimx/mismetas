@@ -10,7 +10,7 @@ export function validateGoalInput(input: string): ValidationResult {
   
   // Check minimum length
   if (trimmed.length < 10) {
-    return { isValid: false, message: "Please provide more detail about your goal (at least 10 characters)" };
+    return { isValid: false, message: "📝 Too short! Add more detail" };
   }
   
   // Check for suspicious patterns
@@ -22,7 +22,7 @@ export function validateGoalInput(input: string): ValidationResult {
   ];
   
   if (suspiciousPatterns.some(pattern => pattern.test(trimmed))) {
-    return { isValid: false, message: "Please enter a meaningful goal" };
+    return { isValid: false, message: "🤔 Please enter a real goal" };
   }
   
   // Check for goal-like keywords (positive validation)
@@ -34,7 +34,7 @@ export function validateGoalInput(input: string): ValidationResult {
   });
   
   if (!hasGoalVerb) {
-    return { isValid: false, message: "Try starting with an action verb like 'Learn', 'Build', 'Run', or 'Improve'" };
+    return { isValid: false, message: "💡 Try: Learn, Build, Run, or Create" };
   }
   
   return { isValid: true };
