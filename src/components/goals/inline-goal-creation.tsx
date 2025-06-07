@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useTransition } from 'react';
+import { useState, useMemo, useCallback, useTransition, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createGoalWithTasks } from '@/app/actions/goal-actions';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TimeframeSlider } from './timeframe-slider';
 import { TargetOptionSlider, type TargetOption } from './target-option-slider';
-import { XIcon, ArrowRightIcon, Loader2 } from 'lucide-react';
+import { XIcon, ArrowRightIcon, Loader2, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/toaster';
-import { AiPlanConfirmationModal } from './ai-plan-confirmation-modal';
+import { AiPlanConfirmationModal, type AcceptedPlanData } from './ai-plan-confirmation-modal';
 import { addDays, addWeeks, addMonths, addYears, endOfYear } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { validateGoalInput } from '@/lib/goal-validation';
+import { validateGoal, generateGoalPlan, getTargetOptions } from '@/lib/api/services/goals';
 
 interface AiPlan {
   tasks: { title: string }[];
@@ -54,10 +57,77 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
     description: string;
     duration: { value: number; unit: string };
   } | null>(null);
+  const [goalValidation, setGoalValidation] = useState<{
+    status: 'idle' | 'validating' | 'valid' | 'invalid';
+    message?: string;
+  }>({ status: 'idle' });
+
+  const aiValidationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (aiValidationTimeoutRef.current) {
+        clearTimeout(aiValidationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const validateWithAI = useCallback(async (goalText: string) => {
+    try {
+      setGoalValidation({ status: 'validating' });
+      
+      const result = await validateGoal(goalText);
+      
+      if (result.isValid) {
+        setGoalValidation({ status: 'valid' });
+      } else {
+        setGoalValidation({ 
+          status: 'invalid', 
+          message: result.feedback || '🤔 This doesn\'t look like a personal goal'
+        });
+      }
+    } catch (error) {
+      // Error handling is done in the service layer
+      // If we get here, it means client validation was already applied
+      console.error('Goal validation error:', error);
+    }
+  }, []);
 
   const handleGoalTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, title: e.target.value }));
-  }, []);
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, title: value }));
+    
+    // Clear any pending AI validation
+    if (aiValidationTimeoutRef.current) {
+      clearTimeout(aiValidationTimeoutRef.current);
+    }
+    
+    // Clear validation on empty
+    if (!value.trim()) {
+      setGoalValidation({ status: 'idle' });
+      return;
+    }
+    
+    // Client-side validation first
+    const validation = validateGoalInput(value);
+    if (!validation.isValid) {
+      setGoalValidation({ 
+        status: 'invalid', 
+        message: validation.message 
+      });
+    } else {
+      // Show valid initially, but queue AI validation for deeper check
+      setGoalValidation({ status: 'valid' });
+      
+      // Debounce AI validation (only for goals longer than 10 chars)
+      if (value.length > 10) {
+        aiValidationTimeoutRef.current = setTimeout(() => {
+          validateWithAI(value);
+        }, 800); // 800ms debounce
+      }
+    }
+  }, [validateWithAI]);
 
   const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, description: e.target.value }));
@@ -98,16 +168,11 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
     setIsTargetOptionsLoading(true);
     setAiTargetOptions(null);
     try {
-      const response = await fetch('/api/ai/suggest-target-options', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          goalName: formData.title,
-          goalDescription: formData.description,
-        }),
+      const data = await getTargetOptions({
+        goalName: formData.title,
+        goalDescription: formData.description,
       });
-      if (!response.ok) throw new Error('Failed to fetch target options');
-      const data = await response.json();
+      
       setAiTargetOptions(data.options || []);
       if (data.options && data.options.length > 0) {
         setSelectedTargetValue(data.options[0].value);
@@ -116,25 +181,11 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
     } catch (error) {
       console.error('Error fetching target options:', error);
 
-      let errorDescription = 'Could not fetch target suggestions from the AI.';
-      // Try to parse specific error details from the API response
-      if (error instanceof Error && (error as any).response) {
-        try {
-          const errorData = await (error as any).response.json();
-          if (errorData && errorData.details) {
-            errorDescription = errorData.details;
-          }
-        } catch (jsonError) {
-          console.error('Failed to parse error response JSON:', jsonError);
-          // Use default error message if JSON parsing fails
-        }
-      } else if (error instanceof Error) {
-        errorDescription = error.message; // Use generic error message if not a response error
-      }
+      const errorDescription = error instanceof Error ? error.message : 'Could not fetch target suggestions from the AI.';
 
       addToast({
         title: 'AI Error',
-        description: errorDescription, // Use the specific or fallback message
+        description: errorDescription,
         variant: 'error',
       });
       setAiTargetOptions([]); // Still show empty options / allow proceeding
@@ -152,6 +203,10 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
     setAiPlan(null);
     setIsModalOpen(false);
     setFinalBaseFormData(null);
+    setGoalValidation({ status: 'idle' });
+    if (aiValidationTimeoutRef.current) {
+      clearTimeout(aiValidationTimeoutRef.current);
+    }
   }, []);
 
   const handleCancel = useCallback(() => {
@@ -198,24 +253,14 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
     }
 
     try {
-      const response = await fetch('/api/ai/generate-goal-plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          goalName: formData.title,
-          goalDescription: formData.description,
-          goalTarget: selectedTargetValue,
-          targetDate: targetDateISO,
-        }),
+      const planData = await generateGoalPlan({
+        goalName: formData.title,
+        goalDescription: formData.description || '',
+        goalTarget: selectedTargetValue,
+        targetDate: targetDateISO,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || `AI Plan API failed`);
-      }
-
-      const plan: AiPlan = await response.json();
-      setAiPlan(plan);
+      setAiPlan(planData);
       setIsModalOpen(true);
     } catch (error) {
       console.error('Error generating AI plan:', error);
@@ -229,87 +274,91 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
     }
   }, [formData, selectedTargetValue, addToast]);
 
-  const handleAcceptAndSave = useCallback(async () => {
-    if (!finalBaseFormData || !aiPlan || selectedTargetValue === null) return;
-
-    setIsModalOpen(false);
-    setIsSaving(true);
-
-    let targetDateForDb: Date | undefined | null = undefined;
-    if (finalBaseFormData.duration.value > 0) {
-      const today = new Date();
-      let calculatedDate: Date;
-      const { value, unit } = finalBaseFormData.duration;
-      switch (unit) {
-        case 'day':
-          calculatedDate = addDays(today, value);
-          break;
-        case 'week':
-          calculatedDate = addWeeks(today, value);
-          break;
-        case 'month':
-          calculatedDate = addMonths(today, value);
-          break;
-        case 'year':
-          calculatedDate = addYears(today, value);
-          break;
-        case 'end-of-year':
-          calculatedDate = endOfYear(today);
-          break;
-        default:
-          calculatedDate = today;
+  const handleModalPlanAccept = useCallback(
+    async (dataFromModal: AcceptedPlanData) => {
+      if (!finalBaseFormData || selectedTargetValue === null) {
+        addToast({ title: 'Error', description: 'Missing base goal data.', variant: 'error' });
+        return;
       }
-      targetDateForDb = unit === 'habit' ? null : calculatedDate;
-    } else {
-      targetDateForDb = null;
-    }
 
-    const goalPayload = {
-      title: finalBaseFormData.title,
-      description: finalBaseFormData.description,
-      target: selectedTargetValue,
-      targetDate: targetDateForDb,
-      tasks: aiPlan.tasks.map(task => ({ title: task.title })),
-    };
+      setIsModalOpen(false);
+      setIsSaving(true);
 
-    startTransition(async () => {
-      try {
-        const result: ActionResponseState = await createGoalWithTasks(goalPayload);
+      let targetDateForDb: Date | undefined | null = undefined;
+      if (finalBaseFormData.duration.value > 0) {
+        const today = new Date();
+        let calculatedDate: Date;
+        const { value, unit } = finalBaseFormData.duration;
+        switch (unit) {
+          case 'day':
+            calculatedDate = addDays(today, value);
+            break;
+          case 'week':
+            calculatedDate = addWeeks(today, value);
+            break;
+          case 'month':
+            calculatedDate = addMonths(today, value);
+            break;
+          case 'year':
+            calculatedDate = addYears(today, value);
+            break;
+          case 'end-of-year':
+            calculatedDate = endOfYear(today);
+            break;
+          default:
+            calculatedDate = today;
+        }
+        targetDateForDb = unit === 'habit' ? null : calculatedDate;
+      }
 
-        if (result.success) {
+      const goalPayload = {
+        title: finalBaseFormData.title,
+        description: finalBaseFormData.description,
+        target: selectedTargetValue,
+        targetDate: targetDateForDb,
+        allSuggestedTasks: dataFromModal.allSuggestedTasks.map(task => ({ title: task.title })),
+        selectedTaskTitles: dataFromModal.selectedTasks.map(task => task.title),
+      };
+
+      startTransition(async () => {
+        try {
+          const result: ActionResponseState = await createGoalWithTasks(goalPayload);
+          if (result.success) {
+            addToast({
+              title: 'Goal Created',
+              description: `Your goal "${finalBaseFormData.title}" and its plan have been created.`,
+              variant: 'success',
+            });
+            onOpenChange?.(false);
+            resetForm();
+            router.refresh();
+          } else {
+            const errorMessages = Object.values(result.errors ?? {}).flat();
+            const formError = result.errors?._form?.join('. ') || '';
+            addToast({
+              title: 'Save Error',
+              description:
+                errorMessages.length > 0
+                  ? errorMessages.join('. ')
+                  : formError || 'Failed to save the goal.',
+              variant: 'error',
+            });
+            console.error('Server action failed:', result.errors);
+          }
+        } catch (error) {
+          console.error('Error calling server action:', error);
           addToast({
-            title: 'Goal Created',
-            description: `Your goal "${finalBaseFormData.title}" and its AI plan have been created.`,
-            variant: 'success',
-          });
-          onOpenChange?.(false);
-          resetForm();
-          router.refresh();
-        } else {
-          const errorMessages = Object.values(result.errors ?? {}).flat();
-          const formError = result.errors?._form?.join('. ') || '';
-          addToast({
-            title: 'Save Error',
-            description:
-              errorMessages.length > 0
-                ? errorMessages.join('. ')
-                : formError || 'Failed to save the goal.',
+            title: 'Error',
+            description: 'An unexpected error occurred while saving your goal.',
             variant: 'error',
           });
-          console.error('Server action failed:', result.errors);
+        } finally {
+          setIsSaving(false);
         }
-      } catch (error) {
-        console.error('Error calling server action:', error);
-        addToast({
-          title: 'Error',
-          description: 'An unexpected error occurred while saving your goal.',
-          variant: 'error',
-        });
-      } finally {
-        setIsSaving(false);
-      }
-    });
-  }, [finalBaseFormData, aiPlan, selectedTargetValue, addToast, router, resetForm, onOpenChange]);
+      });
+    },
+    [finalBaseFormData, selectedTargetValue, addToast, router, resetForm, onOpenChange]
+  );
 
   const stepTitle = useMemo(() => {
     if (step === 1) return 'What is your goal?';
@@ -321,7 +370,7 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
   const mainButtonDisabled = isPending || isAiLoading || isSaving || isTargetOptionsLoading;
 
   return (
-    <div>
+    <div className="p-1 md:p-2 w-full max-w-md mx-auto">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">{stepTitle}</h3>
         <Button
@@ -377,18 +426,41 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">
-                Goal Title<span className="text-destructive">*</span>
+                What do you want to achieve?<span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="title"
-                name="title"
-                placeholder="e.g., Run a 10k race"
-                required
-                value={formData.title}
-                onChange={handleGoalTitleChange}
-                disabled={mainButtonDisabled}
-                className="text-lg py-6"
-              />
+              <div className="relative">
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="e.g., Learn to play guitar, Run a marathon, Build a mobile app"
+                  required
+                  value={formData.title}
+                  onChange={handleGoalTitleChange}
+                  disabled={mainButtonDisabled}
+                  className={cn(
+                    "text-lg py-6 pr-10",
+                    goalValidation.status === 'invalid' && "border-destructive focus-visible:ring-destructive",
+                    goalValidation.status === 'valid' && "border-green-500 focus-visible:ring-green-500"
+                  )}
+                />
+                {goalValidation.status === 'valid' && (
+                  <CheckCircle 
+                    data-testid="valid-checkmark"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" 
+                  />
+                )}
+                {goalValidation.status === 'validating' && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 
+                      data-testid="loading-spinner"
+                      className="h-5 w-5 animate-spin text-muted-foreground" 
+                    />
+                  </div>
+                )}
+              </div>
+              {goalValidation.message && (
+                <p className="text-sm text-destructive mt-1">{goalValidation.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Description (Optional)</Label>
@@ -447,7 +519,7 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
                   ? handleInitiateAiPlan
                   : () => setStep(s => s + 1)
             }
-            disabled={mainButtonDisabled || (step === 1 && !formData.title.trim())}
+            disabled={mainButtonDisabled || (step === 1 && (!formData.title.trim() || goalValidation.status === 'invalid'))}
           >
             {step === 1 && isTargetOptionsLoading && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -467,13 +539,15 @@ export function InlineGoalCreation({ onOpenChange }: InlineGoalCreationProps) {
         </div>
       </div>
 
-      <AiPlanConfirmationModal
-        isOpen={isModalOpen}
-        onClose={() => !isSaving && setIsModalOpen(false)}
-        plan={aiPlan}
-        onAccept={handleAcceptAndSave}
-        isLoading={isSaving}
-      />
+      {isModalOpen && aiPlan && (
+        <AiPlanConfirmationModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          plan={aiPlan}
+          onAccept={handleModalPlanAccept}
+          isLoading={isSaving}
+        />
+      )}
     </div>
   );
 }
