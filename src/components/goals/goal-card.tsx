@@ -10,7 +10,7 @@ export default function GoalCard({ goal }: GoalCardProps) {
   return (
     <Link
       key={goal.id}
-      className="block border rounded-lg p-4 hover:bg-accent/50 transition-colors cursor-pointer"
+      className="block border-2 border-black rounded-lg p-4 hover:bg-accent/50 transition-colors cursor-pointer"
       href={`/goals/${goal.id}`}
     >
       <div className="flex justify-between items-start">

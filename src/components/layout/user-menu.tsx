@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { SignOutForm } from '@/components/auth/sign-out-form';
 import { Button } from '@/components/ui/button';
 import { User as UserIcon } from 'lucide-react'; // Using UserIcon as a fallback
+import { ThemePicker } from '@/components/theme-picker';
 
 interface UserMenuProps {
   user: {
@@ -66,12 +67,16 @@ export function UserMenu({ user }: UserMenuProps) {
         >
           <div className="py-1">
             {user.email && (
-              <div className="px-4 py-3 border-b border-border">
+              <div className="px-4 py-3 border-b border-black">
                 <p className="text-xs text-muted-foreground truncate">Signed in as</p>
                 <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
               </div>
             )}
-            <div className="p-1 mt-1">
+            <div className="p-1 mt-1 space-y-1">
+              <div className="px-3 py-2 flex items-center justify-between">
+                <span className="text-sm">Theme</span>
+                <ThemePicker />
+              </div>
               <SignOutForm
                 variant="ghost"
                 className="w-full text-left justify-start px-3 py-2 text-sm hover:bg-muted rounded-sm"

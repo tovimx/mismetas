@@ -10,10 +10,14 @@ function SummaryCard({
   description: string;
 }) {
   return (
-    <div className="border rounded-lg p-4 bg-card md:p-6" data-component="summary-card">
-      <h2 className="text-xl font-semibold mb-2 md:mb-4">{title}</h2>
-      <div className="text-3xl font-bold">{value}</div>
-      <p className="text-muted-foreground text-sm mt-2">{description}</p>
+    <div 
+      className="border-2 border-black rounded-lg p-4 md:p-6" 
+      style={{ backgroundColor: 'var(--theme-background)' }}
+      data-component="summary-card"
+    >
+      <h2 className="text-xl font-semibold mb-2 md:mb-4 text-black">{title}</h2>
+      <div className="text-3xl font-bold text-black">{value}</div>
+      <p className="text-black/70 text-sm mt-2">{description}</p>
     </div>
   );
 }
