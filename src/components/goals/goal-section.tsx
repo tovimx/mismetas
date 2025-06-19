@@ -30,7 +30,7 @@ export function GoalSection({ goals }: GoalSectionProps) {
         {goals.length > 0 && !isCreatingGoal && (
           <button
             onClick={handleEmptyStateButtonClick}
-            className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+            className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-2 border-black bg-transparent hover:bg-black hover:text-white h-9 px-4 py-2"
           >
             <Icon name="plus" className="h-4 w-4" />
             Add Goal
@@ -38,19 +38,19 @@ export function GoalSection({ goals }: GoalSectionProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-4 border-2 border-black border rounded-lg">
         {isCreatingGoal ? (
-          <div className="border rounded-lg p-4">
+          <div className="p-4">
             <div className="flex justify-center">
               <InlineGoalCreation onOpenChange={handleFormOpen} />
             </div>
           </div>
         ) : goals.length === 0 ? (
-          <div className="border rounded-lg p-8 text-center">
+          <div className="p-8 text-center">
             <p className="text-muted-foreground mb-4">You don't have any goals yet.</p>
             <button
               onClick={handleEmptyStateButtonClick}
-              className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+              className="create-goal cursor-pointer inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-2 border-black bg-transparent hover:bg-black hover:text-white h-9 px-4 py-2"
             >
               <Icon name="plus" className="h-4 w-4" />
               Create your first goal

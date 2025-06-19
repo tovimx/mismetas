@@ -8,6 +8,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'monaco': ['Monaco', 'monospace'],
+        'sans': ['Monaco', 'monospace'],
+      },
       colors: {
         border: "var(--border)",
         background: "var(--background)",
